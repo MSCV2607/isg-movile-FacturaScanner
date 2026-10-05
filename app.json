@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "ISG-FacturaScanner",
+    "slug": "isg-facturascanner",
+    "scheme": "isgfacturascanner",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "android": {
+      "package": "com.intersistemas.facturascanner",
+      "adaptiveIcon": {
+        "backgroundColor": "#F6F4FB",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "plugins": ["expo-router"],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
