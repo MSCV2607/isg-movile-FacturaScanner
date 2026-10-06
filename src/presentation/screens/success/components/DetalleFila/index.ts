@@ -1,0 +1,1 @@
+export { DetalleFila } from './DetalleFila';

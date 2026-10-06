@@ -1,0 +1,1 @@
+export { DetalleTecnico } from './DetalleTecnico';

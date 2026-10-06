@@ -17,7 +17,15 @@
       },
       "predictiveBackGestureEnabled": false
     },
-    "plugins": ["expo-router"],
+    "plugins": [
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "ISG-FacturaScanner usa la cámara para leer el código QR de tus facturas."
+        }
+      ]
+    ],
     "experiments": {
       "typedRoutes": true
     }

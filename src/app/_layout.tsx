@@ -1,7 +1,15 @@
 import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 
-// Capa de presentación (punto de entrada de rutas).
+import { FacturaEnCursoProvider } from '@presentation/state/FacturaEnCursoContext';
+
+// Punto de entrada de las rutas (capa de presentación).
 // Las rutas en src/app son finas: solo montan pantallas de @presentation.
 export default function RootLayout() {
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <FacturaEnCursoProvider>
+      <StatusBar style="dark" />
+      <Stack screenOptions={{ headerShown: false }} />
+    </FacturaEnCursoProvider>
+  );
 }

@@ -1,7 +1,6 @@
-import { View } from 'react-native';
+import { LoginScreen } from '@presentation/screens/login';
 
-// Ruta provisoria vacía: Expo Router necesita al menos una ruta para arrancar.
-// Se reemplaza en el paso de la pantalla de Login.
+// Las rutas son finas: solo montan la pantalla correspondiente.
 export default function Index() {
-  return <View style={{ flex: 1, backgroundColor: '#F6F4FB' }} />;
+  return <LoginScreen />;
 }

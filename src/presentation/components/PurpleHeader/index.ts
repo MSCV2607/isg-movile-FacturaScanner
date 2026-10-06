@@ -1,0 +1,1 @@
+export { PurpleHeader } from './PurpleHeader';

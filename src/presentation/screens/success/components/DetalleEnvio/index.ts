@@ -1,0 +1,1 @@
+export { DetalleEnvio } from './DetalleEnvio';
