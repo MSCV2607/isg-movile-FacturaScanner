@@ -1,2 +1,2 @@
-/** Cómo se sacan las fotos: solas mientras se recorre el ticket, o una por una a mano. */
-export type ModoEscaneo = 'automatico' | 'manual';
+// Archivo obsoleto (el modo automático/manual se reemplazó por el escáner de documentos). Se puede borrar.
+export {};

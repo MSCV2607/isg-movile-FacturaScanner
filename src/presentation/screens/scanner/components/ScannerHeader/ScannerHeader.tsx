@@ -6,12 +6,10 @@ import { colors } from '@presentation/theme';
 import { styles } from './ScannerHeader.styles';
 
 type ScannerHeaderProps = {
-  linternaEncendida: boolean;
   onClose: () => void;
-  onToggleLinterna: () => void;
 };
 
-export function ScannerHeader({ linternaEncendida, onClose, onToggleLinterna }: ScannerHeaderProps) {
+export function ScannerHeader({ onClose }: ScannerHeaderProps) {
   return (
     <View style={styles.container}>
       <Pressable
@@ -23,20 +21,10 @@ export function ScannerHeader({ linternaEncendida, onClose, onToggleLinterna }: 
         <Ionicons name="close" size={22} color={colors.onPrimary} />
       </Pressable>
 
-      <Text style={styles.title}>Escanear QR</Text>
+      <Text style={styles.title}>Escanear factura</Text>
 
-      <Pressable
-        onPress={onToggleLinterna}
-        style={[styles.button, linternaEncendida ? styles.buttonActive : null]}
-        accessibilityRole="button"
-        accessibilityLabel={linternaEncendida ? 'Apagar linterna' : 'Encender linterna'}
-      >
-        <Ionicons
-          name={linternaEncendida ? 'flash' : 'flash-outline'}
-          size={20}
-          color={linternaEncendida ? colors.textPrimary : colors.onPrimary}
-        />
-      </Pressable>
+      {/* Mismo ancho que el botón de cerrar, para que el título quede centrado. */}
+      <View style={styles.spacer} />
     </View>
   );
 }
