@@ -1,0 +1,78 @@
+name: Compilar APK (develop)
+
+on:
+  push:
+    branches: [develop]
+    paths:
+      - app.json
+  workflow_dispatch:
+
+concurrency:
+  group: eas-build-develop
+  cancel-in-progress: false
+
+jobs:
+  compilar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Solo se compila un APK nuevo cuando cambia "version" en app.json.
+      - name: Ver si cambió la versión
+        id: version
+        run: |
+          NUEVA=$(node -p "require('./app.json').expo.version")
+          ANTES="${{ github.event.before }}"
+          ANTERIOR=""
+          if [ -n "$ANTES" ] && [ "$ANTES" != "0000000000000000000000000000000000000000" ] && git cat-file -e "$ANTES^{commit}" 2>/dev/null; then
+            ANTERIOR=$(git show "$ANTES:app.json" | node -p "JSON.parse(require('fs').readFileSync(0,'utf8')).expo.version" 2>/dev/null || echo "")
+          fi
+          echo "nueva=$NUEVA" >> "$GITHUB_OUTPUT"
+          if [ "$NUEVA" != "$ANTERIOR" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "compilar=true" >> "$GITHUB_OUTPUT"
+            echo "Versión $NUEVA (antes: ${ANTERIOR:-ninguna}): se compila un APK nuevo."
+          else
+            echo "compilar=false" >> "$GITHUB_OUTPUT"
+            echo "La versión sigue en $NUEVA: no hace falta un APK nuevo."
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.version.outputs.compilar == 'true'
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        if: steps.version.outputs.compilar == 'true'
+        run: npm ci
+
+      - uses: expo/expo-github-action@v8
+        if: steps.version.outputs.compilar == 'true'
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Compilar el APK en EAS
+        if: steps.version.outputs.compilar == 'true'
+        run: eas build --platform android --profile preview --non-interactive --wait --json > build.json
+
+      - name: Publicar los datos del APK
+        if: steps.version.outputs.compilar == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GIST_TOKEN }}
+          GIST_ID: ${{ secrets.GIST_ID }}
+          VERSION: ${{ steps.version.outputs.nueva }}
+        run: |
+          node -e "
+            const fs = require('fs');
+            const compilacion = JSON.parse(fs.readFileSync('build.json', 'utf8'))[0];
+            const url = compilacion && compilacion.artifacts && compilacion.artifacts.buildUrl;
+            if (!url) { console.error('EAS no devolvió el link del APK.'); process.exit(1); }
+            const datos = { version: process.env.VERSION, url, publicadaEn: new Date().toISOString() };
+            fs.writeFileSync('cuerpo.json', JSON.stringify({ files: { 'apk.json': { content: JSON.stringify(datos, null, 2) } } }));
+            console.log('APK ' + datos.version + ': ' + url);
+          "
+          gh api --method PATCH "gists/$GIST_ID" --input cuerpo.json > /dev/null

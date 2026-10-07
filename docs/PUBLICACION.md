@@ -39,5 +39,30 @@ El APK se compila **después** de `update:configure`, para que ya traiga la URL 
 
 ## Cuándo hace falta un APK nuevo
 
-Si se agregan o actualizan librerías nativas, permisos o íconos, o si se cambia `version` en `app.json`:
-volver a ejecutar `npm run build:apk` e instalar el nuevo APK. Una actualización solo llega a APK con el mismo `version`.
+Si se agregan o actualizan librerías nativas, permisos o íconos, o si se cambia `version` en `app.json`, hace falta un APK nuevo.
+Una actualización por aire solo llega a APK con el mismo `version`: **al cambiar algo nativo, subir `version`** (así los APK viejos no
+reciben código que no pueden ejecutar). Si solo se tocó código en `src`, no se cambia `version`.
+
+## APK nuevo automático
+
+Al subir `version` en `app.json` y hacer merge a `develop`, el workflow **Compilar APK** (`.github/workflows/compilar-apk.yml`)
+compila el APK en EAS y escribe sus datos (versión y link de descarga) en un gist secreto. Las apps instaladas leen ese archivo:
+si hay una versión más nueva que la suya, muestran el cartel **"Hay una versión nueva de la app"**, descargan el APK y abren el
+instalador de Android. Android no permite instalar en silencio: el usuario toca **Instalar**, y la primera vez debe permitir
+instalar desde esta app.
+
+Configuración única:
+
+1. En https://gist.github.com crear un gist **secreto** con un archivo llamado `apk.json` y este contenido:
+   `{"version": "0.0.0", "url": "https://expo.dev"}`. Copiar el ID del gist (el código largo al final de su dirección).
+2. En GitHub → Settings → Developer settings → Personal access tokens (classic) → generar un token con el permiso **gist**.
+3. En el repositorio → Settings → Secrets and variables → Actions, crear los secretos **`GIST_TOKEN`** (el token) y **`GIST_ID`** (el ID).
+4. En `src/core/config/env.ts` completar `URL_DATOS_APK` con
+   `https://gist.githubusercontent.com/<usuario>/<GIST_ID>/raw/apk.json`.
+
+Notas:
+
+- La primera instalación con esta función se hace a mano (`npm run build:apk`); desde esa versión en adelante se ofrecen solas.
+- Cada compilación del perfil `preview` sube el `versionCode` de Android (`autoIncrement` en `eas.json`), requisito para que el
+  instalador acepte la versión nueva encima de la anterior.
+- EAS conserva el APK unos 30 días: alcanza para que los celulares ya instalados lo descarguen cuando se publica.

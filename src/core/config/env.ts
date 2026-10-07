@@ -30,3 +30,10 @@ export const MAXIMO_PAGINAS_ESCANEO = 10;
 export const LADO_MAXIMO_PAGINA = 2000;
 /** Calidad JPEG (0 a 1) de cada página: el texto se lee bien y varias páginas juntas siguen siendo livianas. */
 export const CALIDAD_PAGINA = 0.7;
+
+/**
+ * Dirección del archivo JSON con los datos del último APK publicado (lo escribe el workflow
+ * "Compilar APK"; ver docs/PUBLICACION.md). Vacío = la app no busca APK nuevos.
+ */
+export const URL_DATOS_APK: string =
+  'https://gist.githubusercontent.com/MSCV2607/03a534b0bce19f58412cdc64764ebc77/raw/apk.json';

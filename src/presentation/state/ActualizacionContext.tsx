@@ -1,10 +1,11 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 
+import { APP_VERSION } from '@core/config/appInfo';
 import { MINUTOS_ENTRE_BUSQUEDAS } from '@core/config/env';
 import { container } from '@core/di/container';
-import { ActualizacionDisponible } from '@domain/entities/ActualizacionDisponible';
-import { ActualizacionDialog } from '@presentation/components/ActualizacionDialog';
+import { NovedadApp } from '@domain/entities/NovedadApp';
+import { ActualizacionDialog, textosDelCartel } from '@presentation/components/ActualizacionDialog';
 
 /** Resultado de una búsqueda pedida por el usuario desde Configuración. */
 export type ResultadoBusqueda = { tipo: 'disponible' } | { tipo: 'al-dia' } | { tipo: 'error'; mensaje: string };
@@ -18,10 +19,27 @@ const ActualizacionContext = createContext<ActualizacionValue | null>(null);
 
 const MS_ENTRE_BUSQUEDAS = MINUTOS_ENTRE_BUSQUEDAS * 60 * 1000;
 
+/** Identificador de la novedad, para recordar la que el usuario dejó para después. */
+const idDeNovedad = (novedad: NovedadApp) =>
+  novedad.tipo === 'apk' ? `apk-${novedad.version.version}` : novedad.actualizacion.id;
+
+/**
+ * Busca qué hay de nuevo. Primero un APK más nuevo (trae cambios nativos y el código nuevo no le llegaría
+ * por aire) y, si no hay, una actualización de código. Los errores de la búsqueda de APK se ignoran:
+ * si no hay conexión, la búsqueda de código lo avisa.
+ */
+async function buscarNovedad(): Promise<NovedadApp | null> {
+  const apk = await container.buscarVersionApk.ejecutar().catch(() => null);
+  if (apk) return { tipo: 'apk', version: apk };
+
+  const actualizacion = await container.buscarActualizacion.ejecutar();
+  return actualizacion ? { tipo: 'codigo', actualizacion } : null;
+}
+
 // Busca versiones nuevas sola (al abrir la app y al volver a ella) y muestra el cartel
 // "¿Querés actualizar?" sobre cualquier pantalla.
 export function ActualizacionProvider({ children }: { children: ReactNode }) {
-  const [disponible, setDisponible] = useState<ActualizacionDisponible | null>(null);
+  const [novedad, setNovedad] = useState<NovedadApp | null>(null);
   const [cartelVisible, setCartelVisible] = useState(false);
   const [instalando, setInstalando] = useState(false);
   const [errorAlInstalar, setErrorAlInstalar] = useState('');
@@ -34,9 +52,9 @@ export function ActualizacionProvider({ children }: { children: ReactNode }) {
     ultimaBusquedaRef.current = Date.now();
 
     try {
-      const nueva = await container.buscarActualizacion.ejecutar();
-      if (nueva && nueva.id !== versionPostergadaRef.current) {
-        setDisponible(nueva);
+      const nueva = await buscarNovedad();
+      if (nueva && idDeNovedad(nueva) !== versionPostergadaRef.current) {
+        setNovedad(nueva);
         setCartelVisible(true);
       }
     } catch {
@@ -54,10 +72,10 @@ export function ActualizacionProvider({ children }: { children: ReactNode }) {
 
   const buscarManualmente = useCallback(async (): Promise<ResultadoBusqueda> => {
     try {
-      const nueva = await container.buscarActualizacion.ejecutar();
+      const nueva = await buscarNovedad();
       ultimaBusquedaRef.current = Date.now();
       if (!nueva) return { tipo: 'al-dia' };
-      setDisponible(nueva);
+      setNovedad(nueva);
       setCartelVisible(true);
       return { tipo: 'disponible' };
     } catch (error) {
@@ -66,24 +84,29 @@ export function ActualizacionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const despues = useCallback(() => {
-    versionPostergadaRef.current = disponible?.id ?? null;
+    versionPostergadaRef.current = novedad ? idDeNovedad(novedad) : null;
     setErrorAlInstalar('');
     setCartelVisible(false);
-  }, [disponible]);
+  }, [novedad]);
 
   const actualizar = useCallback(async () => {
-    if (!disponible || instalando) return;
+    if (!novedad || instalando) return;
     setInstalando(true);
     setErrorAlInstalar('');
     try {
-      // Descarga y reinicia la app: si todo sale bien, esta función no llega a terminar.
-      await container.instalarActualizacion.ejecutar();
+      if (novedad.tipo === 'apk') {
+        // Descarga el APK y abre el instalador de Android; vuelve acá si el usuario no confirma.
+        await container.instalarVersionApk.ejecutar(novedad.version);
+      } else {
+        // Descarga y reinicia la app: si todo sale bien, esta función no llega a terminar.
+        await container.instalarActualizacion.ejecutar();
+      }
     } catch (error) {
       setErrorAlInstalar(error instanceof Error ? error.message : 'No se pudo instalar la actualización.');
     } finally {
       setInstalando(false);
     }
-  }, [disponible, instalando]);
+  }, [novedad, instalando]);
 
   const value = useMemo<ActualizacionValue>(() => ({ buscarManualmente }), [buscarManualmente]);
 
@@ -91,8 +114,8 @@ export function ActualizacionProvider({ children }: { children: ReactNode }) {
     <ActualizacionContext.Provider value={value}>
       {children}
       <ActualizacionDialog
-        visible={cartelVisible && disponible !== null}
-        publicadaEn={disponible?.publicadaEn ?? null}
+        visible={cartelVisible && novedad !== null}
+        textos={textosDelCartel(novedad, APP_VERSION)}
         instalando={instalando}
         mensajeError={errorAlInstalar}
         onActualizar={actualizar}

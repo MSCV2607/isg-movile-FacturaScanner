@@ -1,3 +1,4 @@
+import { APP_VERSION } from '@core/config/appInfo';
 import { PROVEEDOR_IA, USAR_EXTRACTOR_SIMULADO, USAR_SERVIDOR_SIMULADO } from '@core/config/env';
 import { ConfiguracionStorageDataSource } from '@data/datasources/ConfiguracionStorageDataSource';
 import { ActualizacionesExpoDataSource } from '@data/datasources/ActualizacionesExpoDataSource';
@@ -9,8 +10,10 @@ import { ExtractorGeminiDataSource } from '@data/datasources/ExtractorGeminiData
 import { ExtractorSimuladoDataSource } from '@data/datasources/ExtractorSimuladoDataSource';
 import { FacturaSqliteDataSource } from '@data/datasources/FacturaSqliteDataSource';
 import { FotosLocalesDataSource } from '@data/datasources/FotosLocalesDataSource';
+import { InstaladorApkExpoDataSource } from '@data/datasources/InstaladorApkExpoDataSource';
 import { ServidorHttpDataSource } from '@data/datasources/ServidorHttpDataSource';
 import { ServidorSimuladoDataSource } from '@data/datasources/ServidorSimuladoDataSource';
+import { VersionApkHttpDataSource } from '@data/datasources/VersionApkHttpDataSource';
 import { ActualizacionRepositoryImpl } from '@data/repositories/ActualizacionRepositoryImpl';
 import { ConfiguracionRepositoryImpl } from '@data/repositories/ConfiguracionRepositoryImpl';
 import { EscanerDocumentosRepositoryImpl } from '@data/repositories/EscanerDocumentosRepositoryImpl';
@@ -18,13 +21,16 @@ import { ExportadorFacturaRepositoryImpl } from '@data/repositories/ExportadorFa
 import { ExtractorFacturaRepositoryImpl } from '@data/repositories/ExtractorFacturaRepositoryImpl';
 import { FacturaLocalRepositoryImpl } from '@data/repositories/FacturaLocalRepositoryImpl';
 import { ServidorRepositoryImpl } from '@data/repositories/ServidorRepositoryImpl';
+import { VersionApkRepositoryImpl } from '@data/repositories/VersionApkRepositoryImpl';
 import { BuscarActualizacionUseCase } from '@domain/usecases/BuscarActualizacionUseCase';
+import { BuscarVersionApkUseCase } from '@domain/usecases/BuscarVersionApkUseCase';
 import { EscanearDocumentoUseCase } from '@domain/usecases/EscanearDocumentoUseCase';
 import { EnviarFacturaUseCase } from '@domain/usecases/EnviarFacturaUseCase';
 import { ExportarFacturaUseCase } from '@domain/usecases/ExportarFacturaUseCase';
 import { ExtraerFacturaUseCase } from '@domain/usecases/ExtraerFacturaUseCase';
 import { GuardarConfiguracionUseCase } from '@domain/usecases/GuardarConfiguracionUseCase';
 import { InstalarActualizacionUseCase } from '@domain/usecases/InstalarActualizacionUseCase';
+import { InstalarVersionApkUseCase } from '@domain/usecases/InstalarVersionApkUseCase';
 import { LeerFacturaUseCase } from '@domain/usecases/LeerFacturaUseCase';
 import { LeerQrFacturaUseCase } from '@domain/usecases/LeerQrFacturaUseCase';
 import { ObtenerConfiguracionUseCase } from '@domain/usecases/ObtenerConfiguracionUseCase';
@@ -40,6 +46,7 @@ const facturaLocalRepository = new FacturaLocalRepositoryImpl(new FacturaSqliteD
 const exportadorRepository = new ExportadorFacturaRepositoryImpl(new ExcelDataSource(), new ArchivosDataSource());
 const configuracionRepository = new ConfiguracionRepositoryImpl(new ConfiguracionStorageDataSource());
 const actualizacionRepository = new ActualizacionRepositoryImpl(new ActualizacionesExpoDataSource());
+const versionApkRepository = new VersionApkRepositoryImpl(new VersionApkHttpDataSource(), new InstaladorApkExpoDataSource());
 const escanerRepository = new EscanerDocumentosRepositoryImpl(new EscanerDocumentosMlKitDataSource());
 const servidorRepository = new ServidorRepositoryImpl(
   USAR_SERVIDOR_SIMULADO ? new ServidorSimuladoDataSource() : new ServidorHttpDataSource(),
@@ -58,6 +65,8 @@ const extraerFacturaUseCase = new ExtraerFacturaUseCase(extractorRepository, con
 export const container = {
   buscarActualizacion: new BuscarActualizacionUseCase(actualizacionRepository),
   instalarActualizacion: new InstalarActualizacionUseCase(actualizacionRepository),
+  buscarVersionApk: new BuscarVersionApkUseCase(versionApkRepository, APP_VERSION),
+  instalarVersionApk: new InstalarVersionApkUseCase(versionApkRepository),
   guardarFactura: new GuardarFacturaUseCase(facturaLocalRepository),
   obtenerUltimasFacturas: new ObtenerUltimasFacturasUseCase(facturaLocalRepository),
   obtenerFacturaGuardada: new ObtenerFacturaGuardadaUseCase(facturaLocalRepository),
