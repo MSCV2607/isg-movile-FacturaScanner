@@ -11,9 +11,11 @@ type TextFieldProps = Omit<TextInputProps, 'style'> & {
   rightElement?: ReactNode;
   /** Mensaje de validación: pinta el campo en rojo y lo muestra debajo. */
   errorMessage?: string;
+  /** Aviso que no impide guardar (por ejemplo, que la IA leyó otro valor): se muestra debajo en naranja. */
+  noteMessage?: string;
 };
 
-export function TextField({ label, rightElement, errorMessage, editable, ...inputProps }: TextFieldProps) {
+export function TextField({ label, rightElement, errorMessage, noteMessage, editable, ...inputProps }: TextFieldProps) {
   const inputStyle = [
     styles.input,
     rightElement ? styles.inputWithAction : null,
@@ -35,6 +37,7 @@ export function TextField({ label, rightElement, errorMessage, editable, ...inpu
         {rightElement ? <View style={styles.action}>{rightElement}</View> : null}
       </View>
       {errorMessage ? <Text style={styles.errorMessage}>{errorMessage}</Text> : null}
+      {!errorMessage && noteMessage ? <Text style={styles.noteMessage}>{noteMessage}</Text> : null}
     </View>
   );
 }

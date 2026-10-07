@@ -22,6 +22,19 @@ export function textosDelSheet(
   modo: ModoEscaneo,
   cantidadFotos: number,
   mensajeError: string | null,
+  qrDetectado = false,
+): TextosSheet {
+  const textos = textosBase(estado, modo, cantidadFotos, mensajeError);
+  // Con el QR de ARCA leído, los datos principales ya están asegurados.
+  const conQr = estado === 'lista' || estado === 'capturando' || estado === 'con-fotos';
+  return qrDetectado && conQr ? { ...textos, chip: `${textos.chip} · QR de ARCA leído` } : textos;
+}
+
+function textosBase(
+  estado: ScannerSheetEstado,
+  modo: ModoEscaneo,
+  cantidadFotos: number,
+  mensajeError: string | null,
 ): TextosSheet {
   switch (estado) {
     case 'lista':

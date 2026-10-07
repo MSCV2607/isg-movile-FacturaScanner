@@ -81,3 +81,17 @@ La app se actualiza sola con **EAS Update** (`expo-updates`), sin reinstalar el 
   o el `version` de `app.json` (la actualización solo llega a APK con el mismo `version`: `runtimeVersion` = `appVersion`).
 - **Expo Go:** no sirve para probar esto; solo la app instalada desde el APK. En Expo Go el botón avisa que no está disponible.
 - Pasos de puesta en marcha y comandos: `docs/PUBLICACION.md`.
+
+## Lectura combinada: QR de ARCA + IA
+
+Al escanear, la cámara busca el QR de ARCA en la misma pasada que saca las fotos (`expo-camera`, sin paso extra).
+`LeerFacturaUseCase` combina las dos lecturas:
+
+- **Con QR:** CUIT, punto de venta, número, fecha, total, moneda, tipo y letra salen del QR (`LeerQrFacturaUseCase`, que decodifica
+  `https://www.afip.gob.ar/fe/qr/?p=<JSON en base64>`). La IA completa razón social, condición fiscal e ítems. Si la IA había leído un dato
+  distinto del QR, la revisión lo avisa debajo del campo ("La IA había leído …").
+- **Sin QR** (tickets no fiscales, facturas viejas o del exterior): la IA lee todo.
+- **Si la IA falla pero hay QR:** se cargan los datos del QR, aparece un aviso en la revisión y el usuario completa a mano razón social,
+  condición fiscal y neto/IVA (los ítems quedan vacíos).
+- El QR no trae razón social, condición fiscal, ítems ni desglose de IVA, por eso la IA sigue siendo necesaria.
+- Solo se usan librerías ya incluidas en el APK (`expo-camera`): llega por actualización automática, sin APK nuevo.

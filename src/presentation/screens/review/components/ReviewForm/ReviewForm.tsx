@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Factura } from '@domain/entities/Factura';
+import { CampoFactura, Factura } from '@domain/entities/Factura';
 import { PrimaryButton } from '@presentation/components/PrimaryButton';
 import { SecondaryButton } from '@presentation/components/SecondaryButton';
 import { TextField } from '@presentation/components/TextField';
@@ -12,6 +12,7 @@ import { useGuardarFactura } from '@presentation/hooks/useGuardarFactura';
 import { useFacturaEnCurso } from '@presentation/state/FacturaEnCursoContext';
 import { colors } from '@presentation/theme';
 
+import { AvisoLectura } from '../AvisoLectura';
 import { ItemsFactura } from '../ItemsFactura';
 import { styles } from './ReviewForm.styles';
 
@@ -21,9 +22,15 @@ type ReviewFormProps = {
 
 export function ReviewForm({ factura }: ReviewFormProps) {
   const router = useRouter();
-  const { limpiar } = useFacturaEnCurso();
+  const { limpiar, discrepancias, avisoLectura } = useFacturaEnCurso();
   const { guardando, guardar } = useGuardarFactura();
   const { valores, errores, cambiar, validar } = useFormularioFactura(factura);
+
+  /** Si la IA había leído otro valor que el QR, se avisa debajo del campo (se usó el del QR). */
+  const notaDe = (campo: CampoFactura): string | undefined => {
+    const discrepancia = discrepancias.find((item) => item.campo === campo);
+    return discrepancia ? `La IA había leído "${discrepancia.valorIa}". Se usó el dato del QR de ARCA.` : undefined;
+  };
 
   const descripcionComprobante = `${factura.tipoComprobante} ${factura.letra}`.trim();
 
@@ -44,6 +51,8 @@ export function ReviewForm({ factura }: ReviewFormProps) {
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
       >
+        {avisoLectura ? <AvisoLectura mensaje={avisoLectura} /> : null}
+
         <View style={styles.card}>
           <TextField
             label="Razón social"
@@ -57,6 +66,7 @@ export function ReviewForm({ factura }: ReviewFormProps) {
             value={valores.cuitEmisor}
             onChangeText={(texto) => cambiar('cuitEmisor', texto)}
             errorMessage={errores.cuitEmisor}
+            noteMessage={notaDe('cuitEmisor')}
             keyboardType="number-pad"
           />
           <TextField
@@ -84,6 +94,7 @@ export function ReviewForm({ factura }: ReviewFormProps) {
                 value={valores.puntoVenta}
                 onChangeText={(texto) => cambiar('puntoVenta', texto)}
                 errorMessage={errores.puntoVenta}
+                noteMessage={notaDe('puntoVenta')}
                 keyboardType="number-pad"
               />
             </View>
@@ -93,6 +104,7 @@ export function ReviewForm({ factura }: ReviewFormProps) {
                 value={valores.numero}
                 onChangeText={(texto) => cambiar('numero', texto)}
                 errorMessage={errores.numero}
+                noteMessage={notaDe('numero')}
                 keyboardType="number-pad"
               />
             </View>
@@ -103,6 +115,7 @@ export function ReviewForm({ factura }: ReviewFormProps) {
             value={valores.fecha}
             onChangeText={(texto) => cambiar('fecha', texto)}
             errorMessage={errores.fecha}
+            noteMessage={notaDe('fecha')}
             placeholder="DD/MM/AAAA"
             keyboardType="numbers-and-punctuation"
           />
@@ -138,6 +151,7 @@ export function ReviewForm({ factura }: ReviewFormProps) {
             value={valores.importeTotal}
             onChangeText={(texto) => cambiar('importeTotal', texto)}
             errorMessage={errores.importeTotal}
+            noteMessage={notaDe('importeTotal')}
             keyboardType="decimal-pad"
           />
         </View>

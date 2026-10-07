@@ -39,6 +39,10 @@ export const styles = StyleSheet.create({
     fontSize: fontSize.caption,
     color: colors.danger,
   },
+  noteMessage: {
+    fontSize: fontSize.caption,
+    color: colors.warningText,
+  },
   action: {
     position: 'absolute',
     right: spacing.xs,

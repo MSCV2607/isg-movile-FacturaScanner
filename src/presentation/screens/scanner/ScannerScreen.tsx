@@ -33,7 +33,7 @@ export function ScannerScreen() {
   const permisoBloqueado = captura.permiso?.canAskAgain === false;
   const alPedirPermiso = permisoBloqueado ? Linking.openSettings : captura.pedirPermiso;
 
-  const textos = textosDelSheet(estado, captura.modo, captura.cantidadFotos, captura.mensajeError);
+  const textos = textosDelSheet(estado, captura.modo, captura.cantidadFotos, captura.mensajeError, captura.qrDetectado);
   const conProblema = estado === 'error' || estado === 'sin-permiso';
 
   return (
@@ -41,7 +41,14 @@ export function ScannerScreen() {
       <StatusBar style="light" />
 
       {tienePermiso ? (
-        <CameraView ref={captura.camaraRef} style={styles.camera} facing="back" enableTorch={captura.linterna} />
+        <CameraView
+          ref={captura.camaraRef}
+          style={styles.camera}
+          facing="back"
+          enableTorch={captura.linterna}
+          barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
+          onBarcodeScanned={captura.alLeerCodigo}
+        />
       ) : null}
 
       <SafeAreaView style={styles.overlay} edges={['top', 'bottom']}>
