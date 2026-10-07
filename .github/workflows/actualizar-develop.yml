@@ -31,4 +31,4 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Publicar actualización en el canal preview
-        run: eas update --channel preview --message "${{ github.event.head_commit.message }}" --non-interactive
+        run: eas update --channel preview --platform android --message "${{ github.event.head_commit.message }}" --non-interactive

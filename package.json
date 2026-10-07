@@ -32,7 +32,7 @@
     "android": "expo start --android",
     "typecheck": "tsc --noEmit",
     "build:apk": "npx eas-cli build -p android --profile preview",
-    "update": "npx eas-cli update --channel preview --message"
+    "update": "npx eas-cli update --channel preview --platform android --message"
   },
   "private": true
 }
