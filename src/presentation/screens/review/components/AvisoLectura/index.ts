@@ -1,0 +1,1 @@
+export { AvisoLectura } from './AvisoLectura';

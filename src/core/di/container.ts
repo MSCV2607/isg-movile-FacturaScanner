@@ -22,6 +22,8 @@ import { ExportarFacturaUseCase } from '@domain/usecases/ExportarFacturaUseCase'
 import { ExtraerFacturaUseCase } from '@domain/usecases/ExtraerFacturaUseCase';
 import { GuardarConfiguracionUseCase } from '@domain/usecases/GuardarConfiguracionUseCase';
 import { InstalarActualizacionUseCase } from '@domain/usecases/InstalarActualizacionUseCase';
+import { LeerFacturaUseCase } from '@domain/usecases/LeerFacturaUseCase';
+import { LeerQrFacturaUseCase } from '@domain/usecases/LeerQrFacturaUseCase';
 import { ObtenerConfiguracionUseCase } from '@domain/usecases/ObtenerConfiguracionUseCase';
 import { GuardarFacturaUseCase } from '@domain/usecases/GuardarFacturaUseCase';
 import { ObtenerFacturaGuardadaUseCase } from '@domain/usecases/ObtenerFacturaGuardadaUseCase';
@@ -46,6 +48,8 @@ const extractorDataSource = USAR_EXTRACTOR_SIMULADO
     : new ExtractorAnthropicDataSource();
 const extractorRepository = new ExtractorFacturaRepositoryImpl(extractorDataSource);
 
+const extraerFacturaUseCase = new ExtraerFacturaUseCase(extractorRepository, configuracionRepository);
+
 export const container = {
   buscarActualizacion: new BuscarActualizacionUseCase(actualizacionRepository),
   instalarActualizacion: new InstalarActualizacionUseCase(actualizacionRepository),
@@ -53,7 +57,9 @@ export const container = {
   obtenerUltimasFacturas: new ObtenerUltimasFacturasUseCase(facturaLocalRepository),
   obtenerFacturaGuardada: new ObtenerFacturaGuardadaUseCase(facturaLocalRepository),
   exportarFactura: new ExportarFacturaUseCase(exportadorRepository),
-  extraerFactura: new ExtraerFacturaUseCase(extractorRepository, configuracionRepository),
+  extraerFactura: extraerFacturaUseCase,
+  leerQrFactura: new LeerQrFacturaUseCase(),
+  leerFactura: new LeerFacturaUseCase(extraerFacturaUseCase),
   validarFactura: new ValidarFacturaUseCase(),
   // Envío al servidor: pendiente de conectar (la app hoy guarda en el celular). Ver docs/ARQUITECTURA.md.
   enviarFactura: new EnviarFacturaUseCase(servidorRepository, configuracionRepository),
