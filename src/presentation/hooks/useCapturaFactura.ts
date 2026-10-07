@@ -23,7 +23,7 @@ const esperar = (milisegundos: number) => new Promise<void>((resolver) => setTim
  */
 export function useCapturaFactura() {
   const router = useRouter();
-  const { guardarFactura } = useFacturaEnCurso();
+  const { iniciarRevision } = useFacturaEnCurso();
   const [permiso, pedirPermiso] = useCameraPermissions();
   const camaraRef = useRef<CameraView>(null);
   const [linterna, setLinterna] = useState(false);
@@ -81,7 +81,7 @@ export function useCapturaFactura() {
 
     try {
       const factura = await container.extraerFactura.ejecutar(fotosRef.current);
-      guardarFactura(factura);
+      iniciarRevision(factura, [...fotosRef.current]);
       router.replace('/revision');
     } catch (error) {
       setMensajeError(

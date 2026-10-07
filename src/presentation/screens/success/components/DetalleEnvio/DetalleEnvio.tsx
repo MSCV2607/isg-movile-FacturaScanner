@@ -1,19 +1,18 @@
 import { View } from 'react-native';
 
-import { formatearComprobante, formatearCuit, formatearImporte } from '@core/utils/formatters';
-import { Factura } from '@domain/entities/Factura';
-import { ResultadoEnvio } from '@domain/entities/ResultadoEnvio';
+import { formatearComprobante, formatearCuit, formatearFechaHora, formatearImporte } from '@core/utils/formatters';
+import { FacturaGuardada } from '@domain/entities/FacturaGuardada';
+import { DetalleFila } from '@presentation/components/DetalleFila';
 
-import { DetalleFila } from '../DetalleFila';
 import { styles } from './DetalleEnvio.styles';
 
 type DetalleEnvioProps = {
-  factura: Factura;
-  resultado: ResultadoEnvio;
+  guardada: FacturaGuardada;
 };
 
-export function DetalleEnvio({ factura, resultado }: DetalleEnvioProps) {
-  const respuesta = `${resultado.codigoHttp ?? ''} ${resultado.textoHttp}`.trim();
+/** Resumen de la factura recién guardada. */
+export function DetalleEnvio({ guardada }: DetalleEnvioProps) {
+  const { factura } = guardada;
 
   return (
     <View style={styles.card}>
@@ -24,7 +23,7 @@ export function DetalleEnvio({ factura, resultado }: DetalleEnvioProps) {
       <DetalleFila etiqueta="Emisor" valor={factura.emisor.razonSocial} />
       <DetalleFila etiqueta="CUIT" valor={formatearCuit(factura.emisor.cuit)} />
       <DetalleFila etiqueta="Total" valor={formatearImporte(factura.importeTotal)} />
-      <DetalleFila etiqueta="Respuesta" valor={respuesta} />
+      <DetalleFila etiqueta="Guardada" valor={formatearFechaHora(guardada.creadaEn)} />
     </View>
   );
 }

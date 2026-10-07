@@ -1,0 +1,1 @@
+export { ActualizacionDialog } from './ActualizacionDialog';

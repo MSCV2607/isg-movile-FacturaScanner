@@ -1,15 +1,21 @@
 import { createContext, ReactNode, useCallback, useContext, useMemo, useState } from 'react';
 
 import { Factura } from '@domain/entities/Factura';
-import { ResultadoEnvio } from '@domain/entities/ResultadoEnvio';
+import { FacturaGuardada } from '@domain/entities/FacturaGuardada';
+import { ImagenFactura } from '@domain/entities/ImagenFactura';
 
 type FacturaEnCursoValue = {
-  /** Factura que se está escaneando / revisando / enviando. */
+  /** Factura que se está revisando (los datos que leyó la IA, ya con las correcciones del usuario). */
   factura: Factura | null;
-  /** Resultado del último intento de envío. */
-  resultado: ResultadoEnvio | null;
-  guardarFactura: (factura: Factura) => void;
-  guardarResultado: (resultado: ResultadoEnvio) => void;
+  /** Fotos originales de la factura, todavía sin guardar. */
+  fotos: ImagenFactura[];
+  /** Resultado de guardar: la factura guardada, o el motivo por el que no se pudo. */
+  guardada: FacturaGuardada | null;
+  errorAlGuardar: string | null;
+  iniciarRevision: (factura: Factura, fotos: ImagenFactura[]) => void;
+  actualizarFactura: (factura: Factura) => void;
+  registrarGuardada: (guardada: FacturaGuardada) => void;
+  registrarError: (mensaje: string) => void;
   limpiar: () => void;
 };
 
@@ -18,16 +24,44 @@ const FacturaEnCursoContext = createContext<FacturaEnCursoValue | null>(null);
 // Lleva la factura de pantalla en pantalla (escáner → revisión → resultado).
 export function FacturaEnCursoProvider({ children }: { children: ReactNode }) {
   const [factura, setFactura] = useState<Factura | null>(null);
-  const [resultado, setResultado] = useState<ResultadoEnvio | null>(null);
+  const [fotos, setFotos] = useState<ImagenFactura[]>([]);
+  const [guardada, setGuardada] = useState<FacturaGuardada | null>(null);
+  const [errorAlGuardar, setErrorAlGuardar] = useState<string | null>(null);
 
   const limpiar = useCallback(() => {
     setFactura(null);
-    setResultado(null);
+    setFotos([]);
+    setGuardada(null);
+    setErrorAlGuardar(null);
+  }, []);
+
+  const iniciarRevision = useCallback((nueva: Factura, fotosNuevas: ImagenFactura[]) => {
+    setFactura(nueva);
+    setFotos(fotosNuevas);
+    setGuardada(null);
+    setErrorAlGuardar(null);
+  }, []);
+
+  const registrarGuardada = useCallback((nueva: FacturaGuardada) => {
+    setGuardada(nueva);
+    setErrorAlGuardar(null);
+    // Las fotos ya están guardadas en archivos: no hace falta seguir teniéndolas en memoria.
+    setFotos([]);
   }, []);
 
   const value = useMemo<FacturaEnCursoValue>(
-    () => ({ factura, resultado, guardarFactura: setFactura, guardarResultado: setResultado, limpiar }),
-    [factura, resultado, limpiar],
+    () => ({
+      factura,
+      fotos,
+      guardada,
+      errorAlGuardar,
+      iniciarRevision,
+      actualizarFactura: setFactura,
+      registrarGuardada,
+      registrarError: setErrorAlGuardar,
+      limpiar,
+    }),
+    [factura, fotos, guardada, errorAlGuardar, iniciarRevision, registrarGuardada, limpiar],
   );
 
   return <FacturaEnCursoContext.Provider value={value}>{children}</FacturaEnCursoContext.Provider>;

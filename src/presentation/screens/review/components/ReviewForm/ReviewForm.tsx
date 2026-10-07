@@ -7,8 +7,8 @@ import { Factura } from '@domain/entities/Factura';
 import { PrimaryButton } from '@presentation/components/PrimaryButton';
 import { SecondaryButton } from '@presentation/components/SecondaryButton';
 import { TextField } from '@presentation/components/TextField';
-import { useEnviarFactura } from '@presentation/hooks/useEnviarFactura';
 import { useFormularioFactura } from '@presentation/hooks/useFormularioFactura';
+import { useGuardarFactura } from '@presentation/hooks/useGuardarFactura';
 import { useFacturaEnCurso } from '@presentation/state/FacturaEnCursoContext';
 import { colors } from '@presentation/theme';
 
@@ -22,14 +22,14 @@ type ReviewFormProps = {
 export function ReviewForm({ factura }: ReviewFormProps) {
   const router = useRouter();
   const { limpiar } = useFacturaEnCurso();
-  const { enviando, enviar } = useEnviarFactura();
+  const { guardando, guardar } = useGuardarFactura();
   const { valores, errores, cambiar, validar } = useFormularioFactura(factura);
 
   const descripcionComprobante = `${factura.tipoComprobante} ${factura.letra}`.trim();
 
-  const alEnviar = () => {
+  const alGuardar = () => {
     const facturaValida = validar();
-    if (facturaValida) enviar(facturaValida);
+    if (facturaValida) guardar(facturaValida);
   };
 
   const alDescartar = () => {
@@ -150,10 +150,10 @@ export function ReviewForm({ factura }: ReviewFormProps) {
           </View>
           <View style={styles.footerPrimary}>
             <PrimaryButton
-              label="Enviar factura"
-              onPress={alEnviar}
-              loading={enviando}
-              rightIcon={<Ionicons name="arrow-forward" size={18} color={colors.onPrimary} />}
+              label="Guardar factura"
+              onPress={alGuardar}
+              loading={guardando}
+              rightIcon={<Ionicons name="checkmark" size={18} color={colors.onPrimary} />}
             />
           </View>
         </View>

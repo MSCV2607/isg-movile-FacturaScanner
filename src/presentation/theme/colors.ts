@@ -19,6 +19,8 @@ export const colors = {
   brandOrange: '#C25F00',
   success: '#135B3B',
   successSurface: '#E0F3EA',
+  warningSurface: '#FDEBD3',
+  warningText: '#7A3F00',
   danger: '#A12018',
   dangerSurface: '#FCE9E7',
   shadow: '#35295F',

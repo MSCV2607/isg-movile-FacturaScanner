@@ -46,3 +46,9 @@ export function completarPuntoVenta(puntoVenta: number): string {
 export function completarNumero(numero: number): string {
   return completarConCeros(numero, 8);
 }
+
+/** 2 de octubre de 2026, 12:50 → "02/10/2026 · 12:50" */
+export function formatearFechaHora(fecha: Date): string {
+  const dia = `${completarConCeros(fecha.getDate(), 2)}/${completarConCeros(fecha.getMonth() + 1, 2)}/${fecha.getFullYear()}`;
+  return `${dia} · ${completarConCeros(fecha.getHours(), 2)}:${completarConCeros(fecha.getMinutes(), 2)}`;
+}

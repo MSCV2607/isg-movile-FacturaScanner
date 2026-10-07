@@ -1,22 +1,15 @@
-import { Configuracion, ErroresConfiguracion } from '../entities/Configuracion';
+import { Configuracion } from '../entities/Configuracion';
 import { ConfiguracionRepository } from '../repositories/ConfiguracionRepository';
 
-/** Valida y guarda. Si hay errores no guarda nada y los devuelve. */
+/** Guarda la configuración (se quitan los espacios sobrantes de los textos). */
 export class GuardarConfiguracionUseCase {
   constructor(private readonly configuracion: ConfiguracionRepository) {}
 
-  async ejecutar(entrada: Configuracion): Promise<ErroresConfiguracion> {
-    const configuracion: Configuracion = {
+  async ejecutar(entrada: Configuracion): Promise<void> {
+    await this.configuracion.guardar({
       endpointUrl: entrada.endpointUrl.trim(),
       token: entrada.token.trim(),
       apiKeyIa: entrada.apiKeyIa.trim(),
-    };
-
-    if (!/^https?:\/\/\S+$/i.test(configuracion.endpointUrl)) {
-      return { endpointUrl: 'Ingresá una URL que empiece con http:// o https://' };
-    }
-
-    await this.configuracion.guardar(configuracion);
-    return {};
+    });
   }
 }

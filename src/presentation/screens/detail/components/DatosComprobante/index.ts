@@ -1,0 +1,1 @@
+export { DatosComprobante } from './DatosComprobante';

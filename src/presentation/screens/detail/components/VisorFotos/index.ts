@@ -1,0 +1,1 @@
+export { VisorFotos } from './VisorFotos';

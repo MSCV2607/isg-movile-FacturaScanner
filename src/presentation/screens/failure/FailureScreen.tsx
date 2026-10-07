@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import { PrimaryButton } from '@presentation/components/PrimaryButton';
 import { ResultLayout } from '@presentation/components/ResultLayout';
 import { SecondaryButton } from '@presentation/components/SecondaryButton';
-import { useEnviarFactura } from '@presentation/hooks/useEnviarFactura';
+import { useGuardarFactura } from '@presentation/hooks/useGuardarFactura';
 import { useFacturaEnCurso } from '@presentation/state/FacturaEnCursoContext';
 import { colors } from '@presentation/theme';
 
@@ -14,10 +14,10 @@ import { styles } from './FailureScreen.styles';
 
 export function FailureScreen() {
   const router = useRouter();
-  const { factura, resultado } = useFacturaEnCurso();
-  const { enviando, enviar } = useEnviarFactura();
+  const { factura, errorAlGuardar } = useFacturaEnCurso();
+  const { guardando, guardar } = useGuardarFactura();
 
-  if (!factura || !resultado) return <Redirect href="/home" />;
+  if (!factura || !errorAlGuardar) return <Redirect href="/home" />;
 
   return (
     <>
@@ -25,12 +25,12 @@ export function FailureScreen() {
       <ResultLayout
         iconName="alert-circle"
         iconColor={colors.danger}
-        title="No se pudo enviar"
-        message="Revisá tu conexión o intentá de nuevo. Los datos de la factura siguen cargados."
+        title="No se pudo guardar"
+        message="Revisá que el celular tenga espacio libre e intentá de nuevo. Los datos de la factura siguen cargados."
       >
-        <DetalleTecnico resultado={resultado} />
+        <DetalleTecnico mensaje={errorAlGuardar} />
         <View style={styles.actions}>
-          <PrimaryButton label="Reintentar" loading={enviando} onPress={() => enviar(factura)} />
+          <PrimaryButton label="Reintentar" loading={guardando} onPress={() => guardar(factura)} />
           <SecondaryButton label="Volver a revisar" onPress={() => router.replace('/revision')} />
         </View>
       </ResultLayout>

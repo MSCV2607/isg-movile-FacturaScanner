@@ -20,3 +20,6 @@ export const MODELO_GEMINI = 'gemini-3.8-flash';
 /** Se usa si el modelo principal sigue fallando por sobrecarga. */
 export const MODELO_GEMINI_RESPALDO = 'gemini-3.5-flash';
 export const MODELO_ANTHROPIC = 'claude-sonnet-5-5';
+
+/** Cada cuánto, como máximo, se busca una versión nueva sola al volver a abrir la app. */
+export const MINUTOS_ENTRE_BUSQUEDAS = 30;

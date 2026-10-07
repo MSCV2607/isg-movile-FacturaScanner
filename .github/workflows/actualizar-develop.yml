@@ -1,0 +1,34 @@
+name: Publicar actualización (develop)
+
+on:
+  push:
+    branches: [develop]
+
+concurrency:
+  group: eas-update-develop
+  cancel-in-progress: true
+
+jobs:
+  actualizar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Verificar tipos
+        run: npm run typecheck
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Publicar actualización en el canal preview
+        run: eas update --channel preview --message "${{ github.event.head_commit.message }}" --non-interactive

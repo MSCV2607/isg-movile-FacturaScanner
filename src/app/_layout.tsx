@@ -1,6 +1,7 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
+import { ActualizacionProvider } from '@presentation/state/ActualizacionContext';
 import { FacturaEnCursoProvider } from '@presentation/state/FacturaEnCursoContext';
 
 // Punto de entrada de las rutas (capa de presentación).
@@ -8,8 +9,10 @@ import { FacturaEnCursoProvider } from '@presentation/state/FacturaEnCursoContex
 export default function RootLayout() {
   return (
     <FacturaEnCursoProvider>
-      <StatusBar style="dark" />
-      <Stack screenOptions={{ headerShown: false }} />
+      <ActualizacionProvider>
+        <StatusBar style="dark" />
+        <Stack screenOptions={{ headerShown: false }} />
+      </ActualizacionProvider>
     </FacturaEnCursoProvider>
   );
 }

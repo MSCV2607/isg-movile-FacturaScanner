@@ -22,7 +22,7 @@ export function ReviewScreen() {
       <SafeAreaView style={styles.headerArea} edges={['top']}>
         <PurpleHeader
           title="Revisar datos"
-          subtitle="QR leído correctamente"
+          subtitle="Datos leídos de la foto"
           showDot
           onBackPress={() => router.replace('/escaner')}
         />

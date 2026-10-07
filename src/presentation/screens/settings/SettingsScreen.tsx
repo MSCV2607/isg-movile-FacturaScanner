@@ -7,19 +7,21 @@ import { APP_NAME, APP_VERSION } from '@core/config/appInfo';
 import { USUARIO_PROVISORIO } from '@core/config/usuarioProvisorio';
 import { PrimaryButton } from '@presentation/components/PrimaryButton';
 import { PurpleHeader } from '@presentation/components/PurpleHeader';
+import { useBuscarActualizaciones } from '@presentation/hooks/useBuscarActualizaciones';
 import { useConfiguracion } from '@presentation/hooks/useConfiguracion';
 import { useFacturaEnCurso } from '@presentation/state/FacturaEnCursoContext';
 import { logos } from '@presentation/theme';
 
 import { AccountSection } from './components/AccountSection';
 import { AiSection } from './components/AiSection';
-import { ServerSection } from './components/ServerSection';
+import { UpdatesSection } from './components/UpdatesSection';
 import { styles } from './SettingsScreen.styles';
 
 export function SettingsScreen() {
   const router = useRouter();
   const { limpiar } = useFacturaEnCurso();
   const configuracion = useConfiguracion();
+  const actualizaciones = useBuscarActualizaciones();
 
   const guardar = async () => {
     const seGuardo = await configuracion.guardar();
@@ -39,22 +41,19 @@ export function SettingsScreen() {
       <SafeAreaView style={styles.headerArea} edges={['top']}>
         <PurpleHeader
           title="Configuración"
-          subtitle="Servidor y cuenta"
+          subtitle="Lectura con IA y cuenta"
           onBackPress={() => router.back()}
         />
       </SafeAreaView>
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <ServerSection
-          endpointUrl={configuracion.endpointUrl}
-          token={configuracion.token}
-          errores={configuracion.errores}
-          conexion={configuracion.conexion}
-          onEndpointChange={configuracion.cambiarEndpoint}
-          onTokenChange={configuracion.cambiarToken}
-          onProbarConexion={configuracion.probarConexion}
-        />
         <AiSection apiKey={configuracion.apiKeyIa} onApiKeyChange={configuracion.cambiarApiKey} />
+        <UpdatesSection
+          versionActual={APP_VERSION}
+          estado={actualizaciones.estado}
+          mensajeError={actualizaciones.mensajeError}
+          onBuscarPress={actualizaciones.buscar}
+        />
         <AccountSection userName={USUARIO_PROVISORIO.nombre} onLogoutPress={cerrarSesion} />
 
         <View style={styles.about}>

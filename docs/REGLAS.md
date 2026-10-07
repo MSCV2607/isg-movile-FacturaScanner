@@ -7,4 +7,5 @@
 5. Las rutas de `src/app` son finas: solo renderizan la pantalla de `presentation/screens`.
 6. La composición de dependencias vive en `core/di/container.ts`.
 7. Se prueba con Expo Go (`npm start`), sin compilaciones EAS.
-8. **Servidor simulado:** mientras no haya endpoint real, `core/config/env.ts` tiene `USAR_SERVIDOR_SIMULADO = true`. Pasarlo a `false` para enviar de verdad con `fetch`.
+8. **Persistencia local:** las facturas se guardan en SQLite (datos) y en archivos (fotos). Los cambios de esquema se hacen agregando una migración al final de `FacturaSqliteDataSource`, sin editar las anteriores.
+9. **Servidor pendiente:** la conexión con el servidor está fuera del flujo hasta que exista el endpoint (`USAR_SERVIDOR_SIMULADO` sigue en `true` para cuando se retome).

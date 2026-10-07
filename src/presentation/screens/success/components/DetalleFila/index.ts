@@ -1,1 +1,1 @@
-export { DetalleFila } from './DetalleFila';
+export {};
