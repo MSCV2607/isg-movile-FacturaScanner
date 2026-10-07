@@ -84,7 +84,7 @@ La app se actualiza sola con **EAS Update** (`expo-updates`), sin reinstalar el 
 
 ## Lectura combinada: QR de ARCA + IA
 
-Al escanear, la cámara busca el QR de ARCA en la misma pasada que saca las fotos (`expo-camera`, sin paso extra).
+Al escanear, el QR de ARCA se busca sobre las páginas ya recortadas (ver "Escaneo de documentos").
 `LeerFacturaUseCase` combina las dos lecturas:
 
 - **Con QR:** CUIT, punto de venta, número, fecha, total, moneda, tipo y letra salen del QR (`LeerQrFacturaUseCase`, que decodifica
@@ -94,4 +94,19 @@ Al escanear, la cámara busca el QR de ARCA en la misma pasada que saca las foto
 - **Si la IA falla pero hay QR:** se cargan los datos del QR, aparece un aviso en la revisión y el usuario completa a mano razón social,
   condición fiscal y neto/IVA (los ítems quedan vacíos).
 - El QR no trae razón social, condición fiscal, ítems ni desglose de IVA, por eso la IA sigue siendo necesaria.
-- Solo se usan librerías ya incluidas en el APK (`expo-camera`): llega por actualización automática, sin APK nuevo.
+
+## Escaneo de documentos
+
+La captura usa el escáner de documentos de Google (ML Kit Document Scanner, paquete `react-native-document-scanner-plugin`), el mismo que
+usa Google Drive: detecta los bordes del papel, endereza, recorta, ofrece filtros y permite varias páginas en un mismo escaneo.
+
+- **Capas:** `EscanearDocumentoUseCase` (dominio) pide las páginas a `EscanerDocumentosRepository`, que implementa
+  `EscanerDocumentosMlKitDataSource` (datos). Del texto de los QR que se vieron elige el de ARCA con `LeerQrFacturaUseCase`.
+- **Pantalla:** `ScannerScreen` abre el escáner solo al entrar y acompaña el resto (leyendo, error). Si el usuario cierra el escáner sin
+  escanear, vuelve a la pantalla anterior. Si la lectura falla, se puede reintentar con las mismas páginas sin escanear de nuevo.
+- **Imágenes:** cada página se reduce a `LADO_MAXIMO_PAGINA` y se comprime (`expo-image-manipulator`) antes de mandarla a la IA.
+- **QR:** `expo-camera` (`scanFromURLAsync`) lo busca en la página entera y, si no aparece, en la mitad inferior y en sus dos cuartos
+  (el de ARCA va casi siempre abajo).
+- **Límites:** necesita Google Play Services y no funciona en Expo Go (el módulo se carga recién al escanear, así que el resto de la app
+  sigue andando). El paquete es nativo: llega **con un APK nuevo**, no por actualización automática.
+- Configuración en `core/config/env.ts`: `MAXIMO_PAGINAS_ESCANEO`, `LADO_MAXIMO_PAGINA`, `CALIDAD_PAGINA`.

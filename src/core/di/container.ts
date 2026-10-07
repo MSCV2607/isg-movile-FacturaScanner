@@ -2,6 +2,7 @@ import { PROVEEDOR_IA, USAR_EXTRACTOR_SIMULADO, USAR_SERVIDOR_SIMULADO } from '@
 import { ConfiguracionStorageDataSource } from '@data/datasources/ConfiguracionStorageDataSource';
 import { ActualizacionesExpoDataSource } from '@data/datasources/ActualizacionesExpoDataSource';
 import { ArchivosDataSource } from '@data/datasources/ArchivosDataSource';
+import { EscanerDocumentosMlKitDataSource } from '@data/datasources/EscanerDocumentosMlKitDataSource';
 import { ExcelDataSource } from '@data/datasources/ExcelDataSource';
 import { ExtractorAnthropicDataSource } from '@data/datasources/ExtractorAnthropicDataSource';
 import { ExtractorGeminiDataSource } from '@data/datasources/ExtractorGeminiDataSource';
@@ -12,11 +13,13 @@ import { ServidorHttpDataSource } from '@data/datasources/ServidorHttpDataSource
 import { ServidorSimuladoDataSource } from '@data/datasources/ServidorSimuladoDataSource';
 import { ActualizacionRepositoryImpl } from '@data/repositories/ActualizacionRepositoryImpl';
 import { ConfiguracionRepositoryImpl } from '@data/repositories/ConfiguracionRepositoryImpl';
+import { EscanerDocumentosRepositoryImpl } from '@data/repositories/EscanerDocumentosRepositoryImpl';
 import { ExportadorFacturaRepositoryImpl } from '@data/repositories/ExportadorFacturaRepositoryImpl';
 import { ExtractorFacturaRepositoryImpl } from '@data/repositories/ExtractorFacturaRepositoryImpl';
 import { FacturaLocalRepositoryImpl } from '@data/repositories/FacturaLocalRepositoryImpl';
 import { ServidorRepositoryImpl } from '@data/repositories/ServidorRepositoryImpl';
 import { BuscarActualizacionUseCase } from '@domain/usecases/BuscarActualizacionUseCase';
+import { EscanearDocumentoUseCase } from '@domain/usecases/EscanearDocumentoUseCase';
 import { EnviarFacturaUseCase } from '@domain/usecases/EnviarFacturaUseCase';
 import { ExportarFacturaUseCase } from '@domain/usecases/ExportarFacturaUseCase';
 import { ExtraerFacturaUseCase } from '@domain/usecases/ExtraerFacturaUseCase';
@@ -37,6 +40,7 @@ const facturaLocalRepository = new FacturaLocalRepositoryImpl(new FacturaSqliteD
 const exportadorRepository = new ExportadorFacturaRepositoryImpl(new ExcelDataSource(), new ArchivosDataSource());
 const configuracionRepository = new ConfiguracionRepositoryImpl(new ConfiguracionStorageDataSource());
 const actualizacionRepository = new ActualizacionRepositoryImpl(new ActualizacionesExpoDataSource());
+const escanerRepository = new EscanerDocumentosRepositoryImpl(new EscanerDocumentosMlKitDataSource());
 const servidorRepository = new ServidorRepositoryImpl(
   USAR_SERVIDOR_SIMULADO ? new ServidorSimuladoDataSource() : new ServidorHttpDataSource(),
 );
@@ -48,6 +52,7 @@ const extractorDataSource = USAR_EXTRACTOR_SIMULADO
     : new ExtractorAnthropicDataSource();
 const extractorRepository = new ExtractorFacturaRepositoryImpl(extractorDataSource);
 
+const leerQrFacturaUseCase = new LeerQrFacturaUseCase();
 const extraerFacturaUseCase = new ExtraerFacturaUseCase(extractorRepository, configuracionRepository);
 
 export const container = {
@@ -58,7 +63,8 @@ export const container = {
   obtenerFacturaGuardada: new ObtenerFacturaGuardadaUseCase(facturaLocalRepository),
   exportarFactura: new ExportarFacturaUseCase(exportadorRepository),
   extraerFactura: extraerFacturaUseCase,
-  leerQrFactura: new LeerQrFacturaUseCase(),
+  leerQrFactura: leerQrFacturaUseCase,
+  escanearDocumento: new EscanearDocumentoUseCase(escanerRepository, leerQrFacturaUseCase),
   leerFactura: new LeerFacturaUseCase(extraerFacturaUseCase),
   validarFactura: new ValidarFacturaUseCase(),
   // Envío al servidor: pendiente de conectar (la app hoy guarda en el celular). Ver docs/ARQUITECTURA.md.

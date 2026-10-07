@@ -23,3 +23,10 @@ export const MODELO_ANTHROPIC = 'claude-sonnet-5-5';
 
 /** Cada cuánto, como máximo, se busca una versión nueva sola al volver a abrir la app. */
 export const MINUTOS_ENTRE_BUSQUEDAS = 30;
+
+/** Máximo de páginas que se pueden escanear de una sola vez (un ticket largo se recorre de a tramos). */
+export const MAXIMO_PAGINAS_ESCANEO = 10;
+/** Lado más largo (en píxeles) al que se reduce cada página antes de mandarla a leer. */
+export const LADO_MAXIMO_PAGINA = 2000;
+/** Calidad JPEG (0 a 1) de cada página: el texto se lee bien y varias páginas juntas siguen siendo livianas. */
+export const CALIDAD_PAGINA = 0.7;

@@ -19,8 +19,9 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  buttonActive: {
-    backgroundColor: colors.accent,
+  spacer: {
+    width: 44,
+    height: 44,
   },
   title: {
     fontSize: fontSize.body,
