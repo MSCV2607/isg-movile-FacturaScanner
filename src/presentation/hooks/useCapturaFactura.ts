@@ -25,11 +25,16 @@ export function useCapturaFactura() {
   // Lo escaneado se guarda para poder reintentar la lectura sin volver a escanear.
   const capturaRef = useRef<CapturaFactura | null>(null);
   const ocupadoRef = useRef(false);
+  // Identifica la lectura vigente: si cambia mientras la IA responde, esa respuesta se descarta.
+  const lecturaRef = useRef(0);
 
   async function analizar(captura: CapturaFactura) {
     setEstado('analizando');
-    const lectura = await container.leerFactura.ejecutar(captura.imagenes, captura.qr);
-    iniciarRevision(lectura, captura.imagenes);
+    const lectura = ++lecturaRef.current;
+    const resultado = await container.leerFactura.ejecutar(captura.imagenes, captura.qr);
+    if (lectura !== lecturaRef.current) return;
+
+    iniciarRevision(resultado, captura.imagenes);
     router.replace('/revision');
   }
 
@@ -78,8 +83,18 @@ export function useCapturaFactura() {
     return correr(escanear);
   }
 
+  /** Sale de la pantalla; si la IA todavía estaba leyendo, su respuesta se ignora al llegar. */
+  function cancelar() {
+    lecturaRef.current += 1;
+    router.back();
+  }
+
   useEffect(() => {
     correr(escanear);
+    return () => {
+      // Al salir de la pantalla, cualquier lectura en curso deja de tener efecto.
+      lecturaRef.current += 1;
+    };
     // Se abre una sola vez al entrar a la pantalla.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -91,5 +106,6 @@ export function useCapturaFactura() {
     qrDetectado,
     reintentar,
     escanearDeNuevo,
+    cancelar,
   };
 }
