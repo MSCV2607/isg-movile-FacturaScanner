@@ -19,6 +19,8 @@ function textoBuscable(factura: ResumenFactura): string {
       `${puntoVenta}${numero}`,
       String(factura.numero),
       factura.categoria,
+      factura.medioPago,
+      factura.notas,
     ].join(' '),
   );
 }
@@ -32,4 +34,24 @@ export function filtrarPorTexto(facturas: ResumenFactura[], texto: string): Resu
     const buscable = textoBuscable(factura);
     return palabras.every((palabra) => buscable.includes(palabra));
   });
+}
+
+/** Marca para filtrar las facturas sin categoría (o sin medio de pago). */
+export const FILTRO_SIN_VALOR = '__sin_valor__';
+
+export interface FiltrosHistorial {
+  texto: string;
+  /** Categoría exacta, FILTRO_SIN_VALOR para las que no tienen, o null para no filtrar. */
+  categoria: string | null;
+  medioPago: string | null;
+}
+
+const coincide = (valor: string, filtro: string | null) =>
+  filtro === null || (filtro === FILTRO_SIN_VALOR ? valor === '' : valor === filtro);
+
+/** Aplica la búsqueda de texto y los filtros de categoría y medio de pago. */
+export function filtrarFacturas(facturas: ResumenFactura[], filtros: FiltrosHistorial): ResumenFactura[] {
+  return filtrarPorTexto(facturas, filtros.texto).filter(
+    (factura) => coincide(factura.categoria, filtros.categoria) && coincide(factura.medioPago, filtros.medioPago),
+  );
 }

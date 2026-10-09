@@ -34,6 +34,10 @@ export interface Factura {
   importeTotal: number;
   /** Rubro del gasto ("Insumos", "Combustible"...). Vacío si no se eligió ninguno. */
   categoria: string;
+  /** Cómo se pagó ("Efectivo", "Transferencia"...). Vacío si no se indicó. */
+  medioPago: string;
+  /** Comentario libre del usuario. */
+  notas: string;
 }
 
 export type CampoFactura =

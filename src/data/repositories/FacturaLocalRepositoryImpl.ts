@@ -42,6 +42,20 @@ export class FacturaLocalRepositoryImpl implements FacturaLocalRepository {
     return filas.map(facturaGuardadaMapper.toResumen);
   }
 
+  async actualizar(id: number, factura: Factura): Promise<void> {
+    // La fecha de guardado original no cambia al corregir: se manda cualquier valor, el UPDATE no la usa.
+    await this.baseDeDatos.actualizar(id, facturaGuardadaMapper.toNuevaDto(factura, new Date()));
+  }
+
+  async eliminar(id: number): Promise<void> {
+    await this.baseDeDatos.eliminar(id);
+    this.fotos.eliminar(id);
+  }
+
+  renombrarCategoria(anterior: string, nueva: string): Promise<number> {
+    return this.baseDeDatos.renombrarCategoria(anterior, nueva);
+  }
+
   async obtenerTodas(rango: RangoFechas): Promise<ResumenFactura[]> {
     const filas = await this.baseDeDatos.obtenerTodas(rango.desde, rango.hasta);
     return filas.map(facturaGuardadaMapper.toResumen);

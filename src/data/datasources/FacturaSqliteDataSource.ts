@@ -50,6 +50,11 @@ const MIGRACIONES: string[] = [
   CREATE INDEX idx_facturas_comprobante ON facturas(emisor_cuit, punto_venta, numero);
   CREATE INDEX idx_facturas_fecha ON facturas(fecha_emision);
   `,
+  // Versión 3: medio de pago y notas de cada factura.
+  `
+  ALTER TABLE facturas ADD COLUMN medio_pago TEXT NOT NULL DEFAULT '';
+  ALTER TABLE facturas ADD COLUMN notas TEXT NOT NULL DEFAULT '';
+  `,
 ];
 
 async function migrar(base: SQLiteDatabase): Promise<void> {
@@ -94,8 +99,9 @@ export class FacturaSqliteDataSource implements FacturasLocalesDataSource {
       const resultado = await base.runAsync(
         `INSERT INTO facturas (
           creada_en, emisor_razon_social, emisor_cuit, emisor_condicion_fiscal, tipo_comprobante, letra,
-          punto_venta, numero, fecha_emision, moneda, importe_neto, importe_iva, importe_total, categoria
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          punto_venta, numero, fecha_emision, moneda, importe_neto, importe_iva, importe_total, categoria,
+          medio_pago, notas
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           fila.creada_en,
           fila.emisor_razon_social,
@@ -111,6 +117,8 @@ export class FacturaSqliteDataSource implements FacturasLocalesDataSource {
           fila.importe_iva,
           fila.importe_total,
           fila.categoria,
+          fila.medio_pago,
+          fila.notas,
         ],
       );
       facturaId = resultado.lastInsertRowId;
@@ -148,6 +156,74 @@ export class FacturaSqliteDataSource implements FacturasLocalesDataSource {
   async obtenerUltimas(cantidad: number): Promise<FacturaFilaDto[]> {
     const base = await this.abrir();
     return base.getAllAsync<FacturaFilaDto>('SELECT * FROM facturas ORDER BY id DESC LIMIT ?', [cantidad]);
+  }
+
+  /** Reemplaza la fila y los ítems de una factura. Las fotos y la fecha de guardado no se tocan. */
+  async actualizar(facturaId: number, { fila, items }: NuevaFacturaDto): Promise<void> {
+    const base = await this.abrir();
+
+    await base.withTransactionAsync(async () => {
+      await base.runAsync(
+        `UPDATE facturas SET
+          emisor_razon_social = ?, emisor_cuit = ?, emisor_condicion_fiscal = ?, tipo_comprobante = ?, letra = ?,
+          punto_venta = ?, numero = ?, fecha_emision = ?, moneda = ?, importe_neto = ?, importe_iva = ?,
+          importe_total = ?, categoria = ?, medio_pago = ?, notas = ?
+         WHERE id = ?`,
+        [
+          fila.emisor_razon_social,
+          fila.emisor_cuit,
+          fila.emisor_condicion_fiscal,
+          fila.tipo_comprobante,
+          fila.letra,
+          fila.punto_venta,
+          fila.numero,
+          fila.fecha_emision,
+          fila.moneda,
+          fila.importe_neto,
+          fila.importe_iva,
+          fila.importe_total,
+          fila.categoria,
+          fila.medio_pago,
+          fila.notas,
+          facturaId,
+        ],
+      );
+      await base.runAsync('DELETE FROM factura_items WHERE factura_id = ?', [facturaId]);
+      for (const [orden, item] of items.entries()) {
+        await base.runAsync(
+          `INSERT INTO factura_items (factura_id, orden, descripcion, cantidad, precio_unitario, alicuota_iva, subtotal)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [facturaId, orden, item.descripcion, item.cantidad, item.precio_unitario, item.alicuota_iva, item.subtotal],
+        );
+      }
+    });
+  }
+
+  async renombrarCategoria(anterior: string, nueva: string): Promise<number> {
+    const base = await this.abrir();
+    const resultado = await base.runAsync('UPDATE facturas SET categoria = ? WHERE categoria = ?', [nueva, anterior]);
+    return resultado.changes;
+  }
+
+  /** Todas las facturas con sus ítems y fotos, de la más vieja a la más nueva (para el respaldo). */
+  async obtenerTodasCompletas(): Promise<FacturaCompletaDto[]> {
+    const base = await this.abrir();
+    const filas = await base.getAllAsync<FacturaFilaDto>('SELECT * FROM facturas ORDER BY id');
+    const completas: FacturaCompletaDto[] = [];
+
+    for (const fila of filas) {
+      const items = await base.getAllAsync<ItemFilaDto>(
+        `SELECT descripcion, cantidad, precio_unitario, alicuota_iva, subtotal
+         FROM factura_items WHERE factura_id = ? ORDER BY orden`,
+        [fila.id],
+      );
+      const fotos = await base.getAllAsync<FotoFilaDto>(
+        'SELECT ruta FROM factura_fotos WHERE factura_id = ? ORDER BY orden',
+        [fila.id],
+      );
+      completas.push({ fila, items, fotos });
+    }
+    return completas;
   }
 
   async obtenerTodas(desde: string | null, hasta: string | null): Promise<FacturaFilaDto[]> {

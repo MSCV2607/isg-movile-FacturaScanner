@@ -21,6 +21,8 @@ function facturaDesdeQr(qr: DatosQrArca): Factura {
     importeIva: 0,
     importeTotal: qr.importeTotal,
     categoria: '',
+    medioPago: '',
+    notas: '',
   };
 }
 

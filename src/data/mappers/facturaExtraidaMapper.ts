@@ -46,5 +46,7 @@ export function facturaExtraidaToEntity(dto: FacturaExtraidaDto): Factura {
     importeIva: aNumero(dto.importe_iva),
     importeTotal: aNumero(dto.importe_total),
     categoria: '',
+    medioPago: '',
+    notas: '',
   };
 }

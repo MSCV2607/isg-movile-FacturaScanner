@@ -22,6 +22,25 @@ export class ArchivosDataSource {
     return carpeta.createDirectory(nombre);
   }
 
+  /** Escribe un texto (UTF-8) como archivo dentro de la carpeta. */
+  guardarTextoEnCarpeta(carpeta: Directory, nombre: string, tipoMime: string, texto: string): void {
+    const archivo = carpeta.createFile(nombre, tipoMime);
+    archivo.write(texto);
+  }
+
+  /** El archivo o la subcarpeta con ese nombre, o null si no está. */
+  buscarEnCarpeta(carpeta: Directory, nombre: string): File | Directory | null {
+    return carpeta.list().find((entrada) => entrada.name === nombre) ?? null;
+  }
+
+  async leerTexto(archivo: File): Promise<string> {
+    return archivo.text();
+  }
+
+  async leerBase64(archivo: File): Promise<string> {
+    return archivo.base64();
+  }
+
   async copiarACarpeta(carpeta: Directory, origenUri: string, nombre: string, tipoMime: string): Promise<void> {
     const base64 = await new File(origenUri).base64();
     this.guardarBase64EnCarpeta(carpeta, nombre, tipoMime, base64);

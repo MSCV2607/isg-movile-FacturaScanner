@@ -19,6 +19,9 @@ export function DatosComprobante({ factura }: DatosComprobanteProps) {
       />
       <DetalleFila etiqueta="Fecha de emisión" valor={formatearFechaIso(factura.fecha)} />
       <DetalleFila etiqueta="Moneda" valor={factura.moneda} />
+      {factura.categoria ? <DetalleFila etiqueta="Categoría" valor={factura.categoria} /> : null}
+      {factura.medioPago ? <DetalleFila etiqueta="Medio de pago" valor={factura.medioPago} /> : null}
+      {factura.notas ? <DetalleFila etiqueta="Notas" valor={factura.notas} /> : null}
     </DetailCard>
   );
 }

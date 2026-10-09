@@ -8,12 +8,15 @@ import { USUARIO_PROVISORIO } from '@core/config/usuarioProvisorio';
 import { PrimaryButton } from '@presentation/components/PrimaryButton';
 import { PurpleHeader } from '@presentation/components/PurpleHeader';
 import { useBuscarActualizaciones } from '@presentation/hooks/useBuscarActualizaciones';
+import { useApariencia } from '@presentation/hooks/useApariencia';
 import { useConfiguracion } from '@presentation/hooks/useConfiguracion';
 import { useFacturaEnCurso } from '@presentation/state/FacturaEnCursoContext';
 import { logos } from '@presentation/theme';
 
 import { AccountSection } from './components/AccountSection';
 import { AiSection } from './components/AiSection';
+import { AparienciaSection } from './components/AparienciaSection';
+import { DatosSection } from './components/DatosSection';
 import { UpdatesSection } from './components/UpdatesSection';
 import { styles } from './SettingsScreen.styles';
 
@@ -22,6 +25,7 @@ export function SettingsScreen() {
   const { limpiar } = useFacturaEnCurso();
   const configuracion = useConfiguracion();
   const actualizaciones = useBuscarActualizaciones();
+  const apariencia = useApariencia();
 
   const guardar = async () => {
     const seGuardo = await configuracion.guardar();
@@ -48,6 +52,8 @@ export function SettingsScreen() {
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <AiSection apiKey={configuracion.apiKeyIa} onApiKeyChange={configuracion.cambiarApiKey} />
+        <DatosSection onCategorias={() => router.push('/categorias')} onRespaldo={() => router.push('/respaldo')} />
+        <AparienciaSection tema={apariencia.tema} onElegir={apariencia.elegir} />
         <UpdatesSection
           versionActual={APP_VERSION}
           estado={actualizaciones.estado}

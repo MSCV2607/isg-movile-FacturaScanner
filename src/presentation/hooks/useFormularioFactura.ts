@@ -14,11 +14,18 @@ import {
 /** Campos que se pueden completar con lo que se sabe del emisor. */
 export type CampoDelHistorial = 'razonSocial' | 'condicionFiscal' | 'categoria';
 
-export function useFormularioFactura(facturaInicial: Factura) {
+interface OpcionesFormulario {
+  /** Completar razón social, condición y rubro desde el historial al escribir un CUIT conocido. En edición se desactiva: ya son datos del usuario. */
+  autocompletar?: boolean;
+}
+
+export function useFormularioFactura(facturaInicial: Factura, { autocompletar = true }: OpcionesFormulario = {}) {
   const [valores, setValores] = useState<FormularioFactura>(() => facturaAFormulario(facturaInicial));
   const [errores, setErrores] = useState<ErroresFactura>({});
   const [items, setItems] = useState<ItemFactura[]>(facturaInicial.items);
   const [categoria, setCategoria] = useState(facturaInicial.categoria);
+  const [medioPago, setMedioPago] = useState(facturaInicial.medioPago);
+  const [notas, setNotas] = useState(facturaInicial.notas);
   // Campos que se completaron solos con el historial y el usuario todavía no tocó.
   const [delHistorial, setDelHistorial] = useState<CampoDelHistorial[]>([]);
 
@@ -33,7 +40,7 @@ export function useFormularioFactura(facturaInicial: Factura) {
 
   // Al escribir un CUIT conocido se completan solo los campos que están vacíos: lo escrito a mano nunca se pisa.
   useEffect(() => {
-    if (!cuitValido) return;
+    if (!autocompletar || !cuitValido) return;
     let vigente = true;
 
     container.buscarEmisorConocido
@@ -66,7 +73,7 @@ export function useFormularioFactura(facturaInicial: Factura) {
     return () => {
       vigente = false;
     };
-  }, [cuit, cuitValido]);
+  }, [autocompletar, cuit, cuitValido]);
 
   const quitarMarca = (campo: CampoDelHistorial) => setDelHistorial((actual) => actual.filter((c) => c !== campo));
 
@@ -80,6 +87,9 @@ export function useFormularioFactura(facturaInicial: Factura) {
     setCategoria(nueva);
     quitarMarca('categoria');
   };
+
+  /** Tocar el medio elegido lo desmarca. */
+  const cambiarMedioPago = (nuevo: string) => setMedioPago((actual) => (actual === nuevo ? '' : nuevo));
 
   const agregarItem = (item: ItemFactura) => setItems((actuales) => [...actuales, item]);
   const reemplazarItem = (indice: number, item: ItemFactura) =>
@@ -99,7 +109,7 @@ export function useFormularioFactura(facturaInicial: Factura) {
 
   /** Valida lo escrito. Devuelve la factura lista para guardar, o null si hay errores. */
   const validar = (): Factura | null => {
-    const factura = formularioAFactura(valores, { ...facturaInicial, items, categoria });
+    const factura = formularioAFactura(valores, { ...facturaInicial, items, categoria, medioPago, notas: notas.trim() });
     const erroresDeValidacion = container.validarFactura.ejecutar(factura);
     setErrores(erroresDeValidacion);
     return Object.keys(erroresDeValidacion).length === 0 ? factura : null;
@@ -110,11 +120,15 @@ export function useFormularioFactura(facturaInicial: Factura) {
     errores,
     items,
     categoria,
+    medioPago,
+    notas,
     cuitValido,
     delHistorial,
     diferenciaDeTotal,
     cambiar,
     cambiarCategoria,
+    cambiarMedioPago,
+    cambiarNotas: setNotas,
     agregarItem,
     reemplazarItem,
     quitarItem,

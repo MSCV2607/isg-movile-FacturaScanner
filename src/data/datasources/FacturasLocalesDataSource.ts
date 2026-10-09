@@ -11,7 +11,12 @@ export interface FacturasLocalesDataSource {
   /** Inserta la factura con sus ítems y devuelve su id. */
   insertar(factura: NuevaFacturaDto): Promise<number>;
   agregarFotos(facturaId: number, rutas: string[]): Promise<void>;
+  /** Reemplaza los datos y los ítems de una factura; las fotos no cambian. */
+  actualizar(facturaId: number, factura: NuevaFacturaDto): Promise<void>;
   eliminar(facturaId: number): Promise<void>;
+  /** Devuelve cuántas facturas cambiaron. */
+  renombrarCategoria(anterior: string, nueva: string): Promise<number>;
+  obtenerTodasCompletas(): Promise<FacturaCompletaDto[]>;
   obtenerUltimas(cantidad: number): Promise<FacturaFilaDto[]>;
   /** Ordenadas por fecha de emisión, las más nuevas primero. null = sin límite de ese lado. */
   obtenerTodas(desde: string | null, hasta: string | null): Promise<FacturaFilaDto[]>;
