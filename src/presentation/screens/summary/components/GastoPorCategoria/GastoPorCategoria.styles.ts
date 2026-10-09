@@ -42,6 +42,27 @@ export const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: colors.primary,
   },
+  bar_sin: {},
+  bar_ok: {},
+  bar_cerca: {
+    backgroundColor: colors.accent,
+  },
+  bar_excedido: {
+    backgroundColor: colors.danger,
+  },
+  tope: {
+    fontSize: fontSize.caption,
+    fontWeight: fontWeight.semibold,
+    color: colors.textSecondary,
+  },
+  tope_sin: {},
+  tope_ok: {},
+  tope_cerca: {
+    color: colors.warningText,
+  },
+  tope_excedido: {
+    color: colors.danger,
+  },
   percent: {
     fontSize: fontSize.caption,
     color: colors.textSecondary,

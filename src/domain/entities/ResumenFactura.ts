@@ -19,5 +19,7 @@ export interface ResumenFactura {
   importe: number;
   /** Rubro del gasto. Vacío si no se eligió ninguno. */
   categoria: string;
+  medioPago: string;
+  notas: string;
   creadaEn: Date;
 }

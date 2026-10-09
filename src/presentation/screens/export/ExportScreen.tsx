@@ -14,7 +14,7 @@ import { OPCIONES_PERIODO, periodoDesdeParametro } from '@presentation/mappers/p
 import { colors } from '@presentation/theme';
 
 import { styles } from './ExportScreen.styles';
-import { FORMATOS, TEXTOS_EXPORTAR } from './ExportScreen.textos';
+import { FORMATOS, TEXTOS_EXPORTAR, TIPOS } from './ExportScreen.textos';
 
 export function ExportScreen() {
   const router = useRouter();
@@ -60,9 +60,24 @@ export function ExportScreen() {
         </View>
 
         <View style={styles.card}>
+          <Text style={styles.sectionTitle}>{TEXTOS_EXPORTAR.tipo}</Text>
+          <View style={styles.chips}>
+            {TIPOS.map((tipo) => (
+              <Chip
+                key={tipo.valor}
+                label={tipo.etiqueta}
+                selected={exportar.tipo === tipo.valor}
+                onPress={() => exportar.setTipo(tipo.valor)}
+              />
+            ))}
+          </View>
+          {exportar.tipo === 'libroIva' ? <Text style={styles.message}>{TEXTOS_EXPORTAR.libroIvaAyuda}</Text> : null}
+        </View>
+
+        <View style={styles.card}>
           <Text style={styles.sectionTitle}>{TEXTOS_EXPORTAR.formato}</Text>
           <View style={styles.chips}>
-            {FORMATOS.map((formato) => (
+            {FORMATOS.filter((formato) => exportar.tipo === 'listado' || formato.valor !== 'pdf').map((formato) => (
               <Chip
                 key={formato.valor}
                 label={formato.etiqueta}

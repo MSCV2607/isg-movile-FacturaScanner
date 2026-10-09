@@ -8,6 +8,7 @@ import { PurpleHeader } from '@presentation/components/PurpleHeader';
 import { useResumenMensual } from '@presentation/hooks/useResumenMensual';
 import { colors } from '@presentation/theme';
 
+import { EvolucionMensual } from './components/EvolucionMensual';
 import { GastoPorCategoria } from './components/GastoPorCategoria';
 import { SelectorMes } from './components/SelectorMes';
 import { TopProveedores } from './components/TopProveedores';
@@ -16,8 +17,9 @@ import { TEXTOS_RESUMEN } from './SummaryScreen.textos';
 
 export function SummaryScreen() {
   const router = useRouter();
-  const { nombreMes, resumen, isLoading, hasError, puedeAvanzar, irAlMesAnterior, irAlMesSiguiente } = useResumenMensual();
+  const { nombreMes, resumen, evolucion, variacion, isLoading, hasError, puedeAvanzar, irAlMesAnterior, irAlMesSiguiente } = useResumenMensual();
 
+  const excedidas = resumen.categorias.filter((categoria) => categoria.estadoTope === 'excedido');
   const sinDatos = resumen.cantidad === 0 && resumen.cantidadOtraMoneda === 0;
 
   return (
@@ -52,10 +54,21 @@ export function SummaryScreen() {
               ) : null}
             </View>
 
+            {excedidas.length > 0 ? (
+              <Text style={styles.alerta}>{TEXTOS_RESUMEN.topeExcedido(excedidas.map((categoria) => categoria.categoria))}</Text>
+            ) : null}
+
             {resumen.categorias.length > 0 ? (
               <View style={styles.card}>
                 <Text style={styles.cardTitle}>{TEXTOS_RESUMEN.porCategoria}</Text>
                 <GastoPorCategoria categorias={resumen.categorias} />
+              </View>
+            ) : null}
+
+            {evolucion.length > 0 ? (
+              <View style={styles.card}>
+                <Text style={styles.cardTitle}>{TEXTOS_RESUMEN.evolucion}</Text>
+                <EvolucionMensual meses={evolucion} variacion={variacion} />
               </View>
             ) : null}
 

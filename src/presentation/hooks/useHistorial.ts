@@ -3,13 +3,15 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { container } from '@core/di/container';
 import { ResumenFactura } from '@domain/entities/ResumenFactura';
-import { filtrarPorTexto } from '@domain/rules/busqueda';
+import { filtrarFacturas } from '@domain/rules/busqueda';
 import { Periodo } from '@domain/rules/periodos';
 
-/** Historial completo de facturas guardadas, con búsqueda por texto y filtro por período. */
+/** Historial completo de facturas guardadas, con búsqueda por texto y filtros por período, categoría y medio de pago. */
 export function useHistorial(periodoInicial: Periodo = 'todo') {
   const [periodo, setPeriodo] = useState<Periodo>(periodoInicial);
   const [texto, setTexto] = useState('');
+  const [categoria, setCategoria] = useState<string | null>(null);
+  const [medioPago, setMedioPago] = useState<string | null>(null);
   const [facturas, setFacturas] = useState<ResumenFactura[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -35,15 +37,17 @@ export function useHistorial(periodoInicial: Periodo = 'todo') {
     }, [periodo]),
   );
 
-  const visibles = useMemo(() => filtrarPorTexto(facturas, texto), [facturas, texto]);
+  const visibles = useMemo(() => filtrarFacturas(facturas, { texto, categoria, medioPago }), [facturas, texto, categoria, medioPago]);
   const resumen = useMemo(() => container.resumirPeriodo.ejecutar(visibles), [visibles]);
 
-  const hayFiltros = texto.trim() !== '' || periodo !== 'todo';
+  const hayFiltros = texto.trim() !== '' || periodo !== 'todo' || categoria !== null || medioPago !== null;
 
   function limpiarFiltros() {
     setTexto('');
     setPeriodo('todo');
+    setCategoria(null);
+    setMedioPago(null);
   }
 
-  return { periodo, setPeriodo, texto, setTexto, visibles, resumen, isLoading, hasError, hayFiltros, limpiarFiltros };
+  return { periodo, setPeriodo, texto, setTexto, categoria, setCategoria, medioPago, setMedioPago, visibles, resumen, isLoading, hasError, hayFiltros, limpiarFiltros };
 }

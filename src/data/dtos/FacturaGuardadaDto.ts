@@ -18,6 +18,8 @@ export interface FacturaFilaDto {
   importe_total: number;
   /** Rubro del gasto; texto vacío si no se eligió. */
   categoria: string;
+  medio_pago: string;
+  notas: string;
 }
 
 export interface ItemFilaDto {

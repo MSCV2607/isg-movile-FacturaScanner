@@ -17,6 +17,12 @@ export interface FacturaLocalRepository {
   buscarPorComprobante(cuit: string, puntoVenta: number, numero: number): Promise<ResumenFactura[]>;
   /** Lo que se sabe del emisor según su factura guardada más reciente; null si nunca se le guardó una. */
   buscarUltimoEmisor(cuit: string): Promise<EmisorConocido | null>;
+  /** Reemplaza los datos y los ítems de una factura guardada; las fotos quedan como estaban. */
+  actualizar(id: number, factura: Factura): Promise<void>;
+  /** Borra la factura con sus ítems y sus fotos. No se puede deshacer. */
+  eliminar(id: number): Promise<void>;
+  /** Cambia el nombre de un rubro en todas las facturas que lo usan. Devuelve cuántas cambió. */
+  renombrarCategoria(anterior: string, nueva: string): Promise<number>;
   /** null si no existe (por ejemplo, si se borró). */
   obtener(id: number): Promise<FacturaGuardada | null>;
 }

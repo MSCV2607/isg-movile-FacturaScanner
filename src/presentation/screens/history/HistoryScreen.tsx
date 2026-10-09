@@ -8,6 +8,9 @@ import { Chip } from '@presentation/components/Chip';
 import { IconButton } from '@presentation/components/IconButton';
 import { PurpleHeader } from '@presentation/components/PurpleHeader';
 import { SecondaryButton } from '@presentation/components/SecondaryButton';
+import { MEDIOS_PAGO } from '@core/config/mediosPago';
+import { FILTRO_SIN_VALOR } from '@domain/rules/busqueda';
+import { useCategorias } from '@presentation/hooks/useCategorias';
 import { useHistorial } from '@presentation/hooks/useHistorial';
 import { OPCIONES_PERIODO } from '@presentation/mappers/periodoOpciones';
 import { colors } from '@presentation/theme';
@@ -20,6 +23,7 @@ import { TEXTOS_HISTORIAL } from './HistoryScreen.textos';
 export function HistoryScreen() {
   const router = useRouter();
   const historial = useHistorial();
+  const { categorias } = useCategorias();
   const { visibles, resumen, isLoading, hasError, hayFiltros } = historial;
 
   const encabezado = (
@@ -33,6 +37,28 @@ export function HistoryScreen() {
             label={opcion.etiqueta}
             selected={historial.periodo === opcion.valor}
             onPress={() => historial.setPeriodo(opcion.valor)}
+          />
+        ))}
+      </ScrollView>
+
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+        {[...categorias, FILTRO_SIN_VALOR].map((opcion) => (
+          <Chip
+            key={opcion}
+            label={opcion === FILTRO_SIN_VALOR ? 'Sin categoría' : opcion}
+            selected={historial.categoria === opcion}
+            onPress={() => historial.setCategoria(historial.categoria === opcion ? null : opcion)}
+          />
+        ))}
+      </ScrollView>
+
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+        {MEDIOS_PAGO.map((opcion) => (
+          <Chip
+            key={opcion}
+            label={opcion}
+            selected={historial.medioPago === opcion}
+            onPress={() => historial.setMedioPago(historial.medioPago === opcion ? null : opcion)}
           />
         ))}
       </ScrollView>

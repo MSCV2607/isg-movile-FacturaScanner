@@ -15,6 +15,8 @@ export interface FilaReporte {
   neto: number;
   iva: number;
   total: number;
+  medioPago: string;
+  notas: string;
 }
 
 export interface TotalesReporte {
@@ -38,6 +40,8 @@ export const reporteFilasMapper = {
       neto: importeConSigno(factura.tipoComprobante, factura.importeNeto),
       iva: importeConSigno(factura.tipoComprobante, factura.importeIva),
       total: importeConSigno(factura.tipoComprobante, factura.importe),
+      medioPago: factura.medioPago,
+      notas: factura.notas.replace(/\s*[\r\n]+\s*/g, ' '),
     }));
   },
 

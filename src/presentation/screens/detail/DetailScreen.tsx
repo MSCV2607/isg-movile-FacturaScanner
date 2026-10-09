@@ -4,6 +4,7 @@ import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { formatearFechaHora } from '@core/utils/formatters';
+import { IconButton } from '@presentation/components/IconButton';
 import { PurpleHeader } from '@presentation/components/PurpleHeader';
 import { SecondaryButton } from '@presentation/components/SecondaryButton';
 import { useDetalleFactura } from '@presentation/hooks/useDetalleFactura';
@@ -34,6 +35,14 @@ export function DetailScreen() {
           subtitle={subtitulo}
           showDot
           onBackPress={() => router.back()}
+          acciones={
+            factura ? (
+              <>
+                <IconButton icon="create-outline" accessibilityLabel="Editar factura" onPress={detalle.editar} />
+                <IconButton icon="trash-outline" accessibilityLabel="Eliminar factura" onPress={detalle.pedirEliminar} />
+              </>
+            ) : undefined
+          }
         />
       </SafeAreaView>
 

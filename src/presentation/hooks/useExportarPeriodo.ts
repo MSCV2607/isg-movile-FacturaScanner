@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { container } from '@core/di/container';
-import { FormatoReporte } from '@domain/entities/ReportePeriodo';
+import { FormatoReporte, TipoReporte } from '@domain/entities/ReportePeriodo';
 import { ResumenFactura } from '@domain/entities/ResumenFactura';
 import { Periodo } from '@domain/rules/periodos';
 
@@ -11,6 +11,7 @@ type Resultado = { tipo: 'ok' | 'error'; mensaje: string } | null;
 export function useExportarPeriodo(periodoInicial: Periodo = 'mes') {
   const [periodo, setPeriodo] = useState<Periodo>(periodoInicial);
   const [formato, setFormato] = useState<FormatoReporte>('xlsx');
+  const [tipo, setTipo] = useState<TipoReporte>('listado');
   const [conFotos, setConFotos] = useState(false);
   const [facturas, setFacturas] = useState<ResumenFactura[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -52,19 +53,19 @@ export function useExportarPeriodo(periodoInicial: Periodo = 'mes') {
     }
   }
 
-  const reporte = () => container.exportarPeriodo.armarReporte(periodo, facturas);
+  const reporte = () => container.exportarPeriodo.armarReporte(periodo, facturas, tipo);
 
   /** Abre el menú del sistema para mandar el archivo por WhatsApp, correo, Drive, etc. */
   const compartir = () =>
     correr(async () => {
-      await container.exportarPeriodo.compartir(reporte(), formato);
+      await container.exportarPeriodo.compartir(await reporte(), formato);
       return null;
     });
 
   /** Pide una carpeta y guarda ahí el archivo (y las fotos, si se eligieron). */
   const guardarEnCarpeta = () =>
     correr(async () => {
-      const { guardado, fotosCopiadas } = await container.exportarPeriodo.guardar(reporte(), formato, conFotos);
+      const { guardado, fotosCopiadas } = await container.exportarPeriodo.guardar(await reporte(), formato, conFotos);
       if (!guardado) return null;
       return conFotos
         ? `Listado guardado con ${fotosCopiadas} ${fotosCopiadas === 1 ? 'foto' : 'fotos'} en la carpeta Fotos.`
@@ -76,6 +77,12 @@ export function useExportarPeriodo(periodoInicial: Periodo = 'mes') {
     setPeriodo,
     formato,
     setFormato,
+    tipo,
+    // El Libro IVA no existe en PDF: si estaba elegido, se pasa a Excel.
+    setTipo: (nuevo: TipoReporte) => {
+      setTipo(nuevo);
+      if (nuevo === 'libroIva' && formato === 'pdf') setFormato('xlsx');
+    },
     conFotos,
     setConFotos,
     cantidad: facturas.length,

@@ -22,6 +22,8 @@ export const facturaGuardadaMapper = {
         importe_iva: factura.importeIva,
         importe_total: factura.importeTotal,
         categoria: factura.categoria,
+        medio_pago: factura.medioPago,
+        notas: factura.notas,
       },
       items: factura.items.map((item) => ({
         descripcion: item.descripcion,
@@ -61,6 +63,8 @@ export const facturaGuardadaMapper = {
         importeIva: fila.importe_iva,
         importeTotal: fila.importe_total,
         categoria: fila.categoria,
+        medioPago: fila.medio_pago,
+        notas: fila.notas,
       },
     };
   },
@@ -89,6 +93,8 @@ export const facturaGuardadaMapper = {
       importeIva: fila.importe_iva,
       importe: fila.importe_total,
       categoria: fila.categoria,
+      medioPago: fila.medio_pago,
+      notas: fila.notas,
       creadaEn: new Date(fila.creada_en),
     };
   },

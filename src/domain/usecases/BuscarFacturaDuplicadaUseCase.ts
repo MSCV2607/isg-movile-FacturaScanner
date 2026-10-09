@@ -7,7 +7,8 @@ import { mismoComprobante } from '../rules/comprobante';
 export class BuscarFacturaDuplicadaUseCase {
   constructor(private readonly facturas: FacturaLocalRepository) {}
 
-  async ejecutar(factura: Factura): Promise<ResumenFactura | null> {
+  /** `ignorarId`: la factura que se está editando, para que no se compare consigo misma. */
+  async ejecutar(factura: Factura, ignorarId?: number): Promise<ResumenFactura | null> {
     const { cuit } = factura.emisor;
     const parecidas = await this.facturas.buscarPorComprobante(cuit, factura.puntoVenta, factura.numero);
 
@@ -20,6 +21,7 @@ export class BuscarFacturaDuplicadaUseCase {
     };
     return (
       parecidas.find((guardada) =>
+        guardada.id !== ignorarId &&
         mismoComprobante(nueva, {
           cuit: guardada.cuitEmisor,
           tipoComprobante: guardada.tipoComprobante,

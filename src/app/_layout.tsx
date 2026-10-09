@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 
 import { ActualizacionProvider } from '@presentation/state/ActualizacionContext';
 import { FacturaEnCursoProvider } from '@presentation/state/FacturaEnCursoContext';
+import { tema } from '@presentation/theme';
 
 // Punto de entrada de las rutas (capa de presentación).
 // Las rutas en src/app son finas: solo montan pantallas de @presentation.
@@ -10,7 +11,7 @@ export default function RootLayout() {
   return (
     <FacturaEnCursoProvider>
       <ActualizacionProvider>
-        <StatusBar style="dark" />
+        <StatusBar style={tema === 'oscuro' ? 'light' : 'dark'} />
         <Stack screenOptions={{ headerShown: false }} />
       </ActualizacionProvider>
     </FacturaEnCursoProvider>

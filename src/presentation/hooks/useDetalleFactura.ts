@@ -1,32 +1,37 @@
-import { useEffect, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { Alert } from 'react-native';
 
 import { container } from '@core/di/container';
 import { FacturaGuardada } from '@domain/entities/FacturaGuardada';
 
-type Accion = 'excel' | 'fotos' | 'compartir';
+type Accion = 'excel' | 'fotos' | 'compartir' | 'eliminar';
 
-/** Carga una factura guardada y expone las acciones del detalle (Excel, fotos, compartir). */
+/** Carga una factura guardada y expone las acciones del detalle (Excel, fotos, compartir, editar, eliminar). */
 export function useDetalleFactura(id: number) {
+  const router = useRouter();
   const [factura, setFactura] = useState<FacturaGuardada | null>(null);
   const [cargando, setCargando] = useState(true);
   const [hayError, setHayError] = useState(false);
   const [accionEnCurso, setAccionEnCurso] = useState<Accion | null>(null);
   const [verFotos, setVerFotos] = useState(false);
 
-  useEffect(() => {
-    let activo = true;
+  // Se vuelve a leer al volver de editar, para mostrar los cambios.
+  useFocusEffect(
+    useCallback(() => {
+      let activo = true;
 
-    container.obtenerFacturaGuardada
-      .ejecutar(id)
-      .then((resultado) => activo && setFactura(resultado))
-      .catch(() => activo && setHayError(true))
-      .finally(() => activo && setCargando(false));
+      container.obtenerFacturaGuardada
+        .ejecutar(id)
+        .then((resultado) => activo && setFactura(resultado))
+        .catch(() => activo && setHayError(true))
+        .finally(() => activo && setCargando(false));
 
-    return () => {
-      activo = false;
-    };
-  }, [id]);
+      return () => {
+        activo = false;
+      };
+    }, [id]),
+  );
 
   async function ejecutar(accion: Accion, tarea: () => Promise<void>, falla: string) {
     if (accionEnCurso) return;
@@ -74,6 +79,27 @@ export function useDetalleFactura(id: number) {
       'No se pudo compartir',
     );
 
+  const editar = () => router.push({ pathname: '/editar/[id]', params: { id: String(id) } });
+
+  /** Pide confirmación: borrar también elimina las fotos del celular y no se puede deshacer. */
+  const pedirEliminar = () =>
+    Alert.alert('¿Eliminar esta factura?', 'Se borran sus datos y sus fotos del celular. No se puede deshacer.', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Eliminar',
+        style: 'destructive',
+        onPress: () =>
+          ejecutar(
+            'eliminar',
+            async () => {
+              await container.eliminarFactura.ejecutar(id);
+              router.back();
+            },
+            'No se pudo eliminar',
+          ),
+      },
+    ]);
+
   // El envío automático por correo todavía no existe: por ahora solo se muestra el aviso.
   const avisarProximamente = () =>
     Alert.alert('Próximamente', 'El envío de la factura por correo va a estar disponible en una próxima versión.');
@@ -82,13 +108,16 @@ export function useDetalleFactura(id: number) {
     factura,
     cargando,
     hayError,
-    accionEnCurso,
+    // Mientras se elimina no hay un botón de exportar que mostrar como ocupado.
+    accionEnCurso: accionEnCurso === 'eliminar' ? null : accionEnCurso,
     verFotos,
     abrirFotos: () => setVerFotos(true),
     cerrarFotos: () => setVerFotos(false),
     exportarExcel,
     descargarFotos,
     compartir,
+    editar,
+    pedirEliminar,
     avisarProximamente,
   };
 }

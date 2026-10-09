@@ -40,6 +40,14 @@ export const styles = StyleSheet.create({
     fontSize: fontSize.caption,
     color: colors.onPrimaryMuted,
   },
+  alerta: {
+    padding: spacing.lg,
+    borderRadius: radius.md,
+    fontSize: fontSize.label,
+    fontWeight: fontWeight.bold,
+    color: colors.danger,
+    backgroundColor: colors.dangerSurface,
+  },
   card: {
     gap: spacing.lg,
     padding: spacing.lg,
