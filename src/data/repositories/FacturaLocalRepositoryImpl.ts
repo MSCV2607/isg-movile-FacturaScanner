@@ -1,7 +1,9 @@
 import { facturaGuardadaMapper } from '@data/mappers/facturaGuardadaMapper';
+import { EmisorConocido } from '@domain/entities/EmisorConocido';
 import { Factura } from '@domain/entities/Factura';
 import { FacturaGuardada } from '@domain/entities/FacturaGuardada';
 import { ImagenFactura } from '@domain/entities/ImagenFactura';
+import { RangoFechas } from '@domain/entities/RangoFechas';
 import { ResumenFactura } from '@domain/entities/ResumenFactura';
 import { FacturaLocalRepository } from '@domain/repositories/FacturaLocalRepository';
 
@@ -38,6 +40,21 @@ export class FacturaLocalRepositoryImpl implements FacturaLocalRepository {
   async obtenerUltimas(cantidad: number): Promise<ResumenFactura[]> {
     const filas = await this.baseDeDatos.obtenerUltimas(cantidad);
     return filas.map(facturaGuardadaMapper.toResumen);
+  }
+
+  async obtenerTodas(rango: RangoFechas): Promise<ResumenFactura[]> {
+    const filas = await this.baseDeDatos.obtenerTodas(rango.desde, rango.hasta);
+    return filas.map(facturaGuardadaMapper.toResumen);
+  }
+
+  async buscarPorComprobante(cuit: string, puntoVenta: number, numero: number): Promise<ResumenFactura[]> {
+    const filas = await this.baseDeDatos.buscarPorComprobante(cuit, puntoVenta, numero);
+    return filas.map(facturaGuardadaMapper.toResumen);
+  }
+
+  async buscarUltimoEmisor(cuit: string): Promise<EmisorConocido | null> {
+    const fila = await this.baseDeDatos.obtenerUltimaDeEmisor(cuit);
+    return fila ? facturaGuardadaMapper.toEmisorConocido(fila) : null;
   }
 
   async obtener(id: number): Promise<FacturaGuardada | null> {

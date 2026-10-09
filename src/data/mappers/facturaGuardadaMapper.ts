@@ -1,4 +1,5 @@
 import { FacturaFilaDto, ItemFilaDto, NuevaFacturaDto } from '@data/dtos/FacturaGuardadaDto';
+import { EmisorConocido } from '@domain/entities/EmisorConocido';
 import { Factura } from '@domain/entities/Factura';
 import { FacturaGuardada } from '@domain/entities/FacturaGuardada';
 import { ResumenFactura } from '@domain/entities/ResumenFactura';
@@ -20,6 +21,7 @@ export const facturaGuardadaMapper = {
         importe_neto: factura.importeNeto,
         importe_iva: factura.importeIva,
         importe_total: factura.importeTotal,
+        categoria: factura.categoria,
       },
       items: factura.items.map((item) => ({
         descripcion: item.descripcion,
@@ -58,20 +60,35 @@ export const facturaGuardadaMapper = {
         importeNeto: fila.importe_neto,
         importeIva: fila.importe_iva,
         importeTotal: fila.importe_total,
+        categoria: fila.categoria,
       },
+    };
+  },
+
+  toEmisorConocido(fila: FacturaFilaDto): EmisorConocido {
+    return {
+      razonSocial: fila.emisor_razon_social,
+      condicionFiscal: fila.emisor_condicion_fiscal,
+      categoria: fila.categoria,
     };
   },
 
   toResumen(fila: FacturaFilaDto): ResumenFactura {
     return {
       id: fila.id,
+      tipoComprobante: fila.tipo_comprobante,
       letra: fila.letra,
       puntoVenta: fila.punto_venta,
       numero: fila.numero,
       razonSocial: fila.emisor_razon_social,
       cuitEmisor: fila.emisor_cuit,
+      condicionFiscal: fila.emisor_condicion_fiscal,
       fecha: fila.fecha_emision,
+      moneda: fila.moneda,
+      importeNeto: fila.importe_neto,
+      importeIva: fila.importe_iva,
       importe: fila.importe_total,
+      categoria: fila.categoria,
       creadaEn: new Date(fila.creada_en),
     };
   },

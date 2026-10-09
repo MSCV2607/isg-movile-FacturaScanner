@@ -24,8 +24,9 @@ presentation  ──►  domain  ◄──  data
 | `src/app/` | Rutas de Expo Router. Archivos finos que solo montan una pantalla de `presentation`. |
 | `src/domain/entities/` | Modelos del negocio (por ejemplo, `Factura`). |
 | `src/domain/repositories/` | Interfaces (contratos) de los repositorios. |
+| `src/domain/rules/` | Reglas de negocio puras y compartidas (CUIT, comparación de comprobantes, períodos, búsqueda de texto). Sin acceso a datos. |
 | `src/domain/usecases/` | Casos de uso: una acción de negocio por archivo. |
-| `src/data/datasources/` | Acceso a fuentes externas: IA, base SQLite, archivos del celular, armado del Excel. |
+| `src/data/datasources/` | Acceso a fuentes externas: IA, base SQLite, archivos del celular, armado de Excel, CSV y PDF. |
 | `src/data/dtos/` | Formas de los datos tal como vienen de afuera (respuesta de la IA, filas de SQLite). |
 | `src/data/mappers/` | Conversión DTO ⇄ entidad. |
 | `src/data/repositories/` | Implementaciones concretas de las interfaces de `domain`. |
@@ -51,13 +52,52 @@ entidad → contrato → caso de uso → implementación de datos → pantalla.
 
 Cada factura que el usuario confirma en "Revisar datos" se guarda en el celular (`FacturaLocalRepository`):
 
-- **Datos:** base SQLite `facturas.db` (`expo-sqlite`), con las tablas `facturas`, `factura_items` y `factura_fotos`.
+- **Datos:** base SQLite `facturas.db` (`expo-sqlite`), con las tablas `facturas`, `factura_items` y `factura_fotos`
+  (la migración 2 agregó la columna `categoria` e índices por comprobante y por fecha).
   El esquema se actualiza con migraciones numeradas (`PRAGMA user_version`) en `FacturaSqliteDataSource`:
   para cambiar la base se agrega una migración nueva al final, nunca se edita una anterior.
 - **Fotos originales:** archivos `facturas/<id>/foto-N.jpg` en la carpeta privada de la app (`expo-file-system`);
   la base guarda solo la ruta relativa. Si falla el guardado de las fotos, se deshace también el de los datos.
 - **Historial y detalle:** Inicio lista las últimas facturas guardadas y cada una abre `Detalle de factura`
   (`/detalle/[id]`), desde donde se exporta a Excel (`xlsx`), se descargan las fotos o se comparte (`expo-sharing`).
+
+## Revisión de la factura
+
+Al revisar una factura, antes de guardarla (`useFormularioFactura`, `useGuardarFactura`):
+
+- **Validaciones locales:** `ValidarFacturaUseCase` bloquea el guardado (CUIT, fecha, importes) y
+  `RevisarCoherenciaFacturaUseCase` solo avisa: si `neto + IVA` no da el `total` (tolerancia de 5 centavos) se muestra una nota
+  en el campo Total. El CUIT usa la regla `domain/rules/cuit.ts` y muestra "CUIT válido" mientras se escribe.
+- **Autocompletar con el historial:** con un CUIT válido, `BuscarEmisorConocidoUseCase` toma la factura guardada más reciente de ese
+  emisor y completa razón social, condición fiscal y categoría, **solo en los campos vacíos**. Esos campos quedan marcados
+  "De tu historial" hasta que el usuario los toca.
+- **Duplicados:** `BuscarFacturaDuplicadaUseCase` busca por CUIT + punto de venta + número (índice `idx_facturas_comprobante`)
+  y compara tipo y letra sin mirar mayúsculas ni tildes. Si ya existe, `DuplicadoDialog` muestra las dos lado a lado y deja elegir
+  entre ver la guardada, guardar igual o volver a revisar.
+- **Ítems editables:** se pueden corregir, borrar o agregar desde `ItemEditorSheet`. Los totales de la factura **no** se recalculan
+  solos (pueden incluir otros tributos): el aviso de coherencia ayuda a detectar diferencias.
+- **Categoría:** cada factura tiene un rubro opcional (`src/core/config/categorias.ts`) que alimenta el resumen.
+
+## Historial, resumen y exportación
+
+Tres pantallas nuevas, todas sobre las facturas guardadas en el celular:
+
+| Ruta | Qué hace |
+|---|---|
+| `/historial` | Lista completa con búsqueda sin tildes (razón social, CUIT, número, categoría), filtro por período y total en pesos de lo que se ve. Se llega con "Ver todo" en Inicio. |
+| `/resumen` | Gasto de un mes por categoría y principales proveedores (`ResumirPeriodoUseCase`), con navegación entre meses. |
+| `/exportar` | Listado de un período en Excel, CSV o PDF, con o sin fotos. |
+
+Reglas del resumen y de los listados: solo se suman facturas en pesos (`ARS`; las de otra moneda se avisan aparte) y las
+notas de crédito restan. Los períodos (`Este mes`, `Mes anterior`, `Últimos 3 meses`, `Todo`) se calculan en `domain/rules/periodos.ts`.
+
+Exportación (`ExportarPeriodoUseCase` + `ExportadorReporteRepository`):
+
+- **Sin fotos:** se genera el archivo y se abre el menú de compartir; también se puede guardar en una carpeta.
+- **Con fotos:** se elige una carpeta, se guarda el listado y las fotos originales en una subcarpeta `Fotos`.
+- **Excel** (`xlsx`): hoja "Facturas", una fila por comprobante y una fila de total. **CSV:** UTF-8 con BOM, separador `;` y coma decimal
+  (para abrirlo directo en Excel en español). **PDF** (`pdf-lib`, JavaScript puro): A4 apaisado, encabezado repetido en cada hoja;
+  los caracteres que la fuente estándar no soporta se reemplazan por `?`.
 
 ## Pendiente: servidor
 

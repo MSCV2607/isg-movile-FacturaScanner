@@ -24,6 +24,10 @@ export const styles = StyleSheet.create({
     flex: 1,
     gap: 2,
   },
+  acciones: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
   title: {
     fontSize: fontSize.title,
     fontWeight: fontWeight.extrabold,

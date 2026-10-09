@@ -1,0 +1,1 @@
+export { BarraBusqueda } from './BarraBusqueda';

@@ -32,6 +32,8 @@ export interface Factura {
   importeNeto: number;
   importeIva: number;
   importeTotal: number;
+  /** Rubro del gasto ("Insumos", "Combustible"...). Vacío si no se eligió ninguno. */
+  categoria: string;
 }
 
 export type CampoFactura =

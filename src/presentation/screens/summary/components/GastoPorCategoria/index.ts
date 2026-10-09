@@ -1,0 +1,1 @@
+export { GastoPorCategoria } from './GastoPorCategoria';

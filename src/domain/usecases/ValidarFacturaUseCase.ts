@@ -1,14 +1,5 @@
 import { CampoFactura, ErroresFactura, Factura } from '../entities/Factura';
-
-const PESOS_CUIT = [5, 4, 3, 2, 7, 6, 5, 4, 3, 2];
-
-function cuitValido(cuit: string): boolean {
-  if (!/^\d{11}$/.test(cuit)) return false;
-  const suma = PESOS_CUIT.reduce((total, peso, i) => total + peso * Number(cuit[i]), 0);
-  const resto = suma % 11;
-  const verificador = resto === 0 ? 0 : resto === 1 ? 9 : 11 - resto;
-  return verificador === Number(cuit[10]);
-}
+import { esCuitValido } from '../rules/cuit';
 
 function fechaValida(fechaIso: string): boolean {
   const partes = /^(\d{4})-(\d{2})-(\d{2})$/.exec(fechaIso);
@@ -29,7 +20,7 @@ export class ValidarFacturaUseCase {
     };
 
     if (factura.emisor.razonSocial.trim() === '') marcar('razonSocial', 'Falta la razón social.');
-    if (!cuitValido(factura.emisor.cuit)) marcar('cuitEmisor', 'El CUIT no es válido.');
+    if (!esCuitValido(factura.emisor.cuit)) marcar('cuitEmisor', 'El CUIT no es válido.');
     if (factura.emisor.condicionFiscal.trim() === '') marcar('condicionFiscal', 'Falta la condición fiscal.');
 
     if (!Number.isInteger(factura.puntoVenta) || factura.puntoVenta < 1 || factura.puntoVenta > 99999) {

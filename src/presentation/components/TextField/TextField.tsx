@@ -13,9 +13,11 @@ type TextFieldProps = Omit<TextInputProps, 'style'> & {
   errorMessage?: string;
   /** Aviso que no impide guardar (por ejemplo, que la IA leyó otro valor): se muestra debajo en naranja. */
   noteMessage?: string;
+  /** Confirmación (por ejemplo, "CUIT válido"): se muestra debajo en verde cuando no hay error ni aviso. */
+  okMessage?: string;
 };
 
-export function TextField({ label, rightElement, errorMessage, noteMessage, editable, ...inputProps }: TextFieldProps) {
+export function TextField({ label, rightElement, errorMessage, noteMessage, okMessage, editable, ...inputProps }: TextFieldProps) {
   const inputStyle = [
     styles.input,
     rightElement ? styles.inputWithAction : null,
@@ -38,6 +40,7 @@ export function TextField({ label, rightElement, errorMessage, noteMessage, edit
       </View>
       {errorMessage ? <Text style={styles.errorMessage}>{errorMessage}</Text> : null}
       {!errorMessage && noteMessage ? <Text style={styles.noteMessage}>{noteMessage}</Text> : null}
+      {!errorMessage && !noteMessage && okMessage ? <Text style={styles.okMessage}>{okMessage}</Text> : null}
     </View>
   );
 }

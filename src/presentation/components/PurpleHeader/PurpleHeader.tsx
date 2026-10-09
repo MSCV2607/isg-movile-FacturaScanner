@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { ReactNode } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { colors } from '@presentation/theme';
@@ -11,9 +12,11 @@ type PurpleHeaderProps = {
   /** Punto naranja delante del subtítulo (estado "listo"). */
   showDot?: boolean;
   onBackPress: () => void;
+  /** Botones a la derecha del título (por ejemplo, ir al resumen). */
+  acciones?: ReactNode;
 };
 
-export function PurpleHeader({ title, subtitle, showDot = false, onBackPress }: PurpleHeaderProps) {
+export function PurpleHeader({ title, subtitle, showDot = false, onBackPress, acciones }: PurpleHeaderProps) {
   return (
     <View style={styles.container}>
       <Pressable
@@ -34,6 +37,8 @@ export function PurpleHeader({ title, subtitle, showDot = false, onBackPress }: 
           </View>
         ) : null}
       </View>
+
+      {acciones ? <View style={styles.acciones}>{acciones}</View> : null}
     </View>
   );
 }

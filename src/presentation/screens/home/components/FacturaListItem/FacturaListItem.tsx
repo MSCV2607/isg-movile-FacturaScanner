@@ -38,6 +38,11 @@ export function FacturaListItem({ factura, onPress }: FacturaListItemProps) {
           {factura.razonSocial}
         </Text>
         <Text style={styles.meta}>{detalle}</Text>
+        {factura.categoria !== '' ? (
+          <View style={styles.badge}>
+            <Text style={styles.badgeLabel}>{factura.categoria}</Text>
+          </View>
+        ) : null}
       </View>
 
       <View style={styles.summary}>

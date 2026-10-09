@@ -43,6 +43,10 @@ export const styles = StyleSheet.create({
     fontSize: fontSize.caption,
     color: colors.warningText,
   },
+  okMessage: {
+    fontSize: fontSize.caption,
+    color: colors.success,
+  },
   action: {
     position: 'absolute',
     right: spacing.xs,

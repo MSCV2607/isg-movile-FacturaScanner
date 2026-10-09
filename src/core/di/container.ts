@@ -9,6 +9,9 @@ import { ExtractorAnthropicDataSource } from '@data/datasources/ExtractorAnthrop
 import { ExtractorGeminiDataSource } from '@data/datasources/ExtractorGeminiDataSource';
 import { ExtractorSimuladoDataSource } from '@data/datasources/ExtractorSimuladoDataSource';
 import { FacturaSqliteDataSource } from '@data/datasources/FacturaSqliteDataSource';
+import { ReporteCsvDataSource } from '@data/datasources/ReporteCsvDataSource';
+import { ReporteExcelDataSource } from '@data/datasources/ReporteExcelDataSource';
+import { ReportePdfDataSource } from '@data/datasources/ReportePdfDataSource';
 import { FotosLocalesDataSource } from '@data/datasources/FotosLocalesDataSource';
 import { InstaladorApkExpoDataSource } from '@data/datasources/InstaladorApkExpoDataSource';
 import { ServidorHttpDataSource } from '@data/datasources/ServidorHttpDataSource';
@@ -18,15 +21,19 @@ import { ActualizacionRepositoryImpl } from '@data/repositories/ActualizacionRep
 import { ConfiguracionRepositoryImpl } from '@data/repositories/ConfiguracionRepositoryImpl';
 import { EscanerDocumentosRepositoryImpl } from '@data/repositories/EscanerDocumentosRepositoryImpl';
 import { ExportadorFacturaRepositoryImpl } from '@data/repositories/ExportadorFacturaRepositoryImpl';
+import { ExportadorReporteRepositoryImpl } from '@data/repositories/ExportadorReporteRepositoryImpl';
 import { ExtractorFacturaRepositoryImpl } from '@data/repositories/ExtractorFacturaRepositoryImpl';
 import { FacturaLocalRepositoryImpl } from '@data/repositories/FacturaLocalRepositoryImpl';
 import { ServidorRepositoryImpl } from '@data/repositories/ServidorRepositoryImpl';
 import { VersionApkRepositoryImpl } from '@data/repositories/VersionApkRepositoryImpl';
 import { BuscarActualizacionUseCase } from '@domain/usecases/BuscarActualizacionUseCase';
+import { BuscarEmisorConocidoUseCase } from '@domain/usecases/BuscarEmisorConocidoUseCase';
+import { BuscarFacturaDuplicadaUseCase } from '@domain/usecases/BuscarFacturaDuplicadaUseCase';
 import { BuscarVersionApkUseCase } from '@domain/usecases/BuscarVersionApkUseCase';
 import { EscanearDocumentoUseCase } from '@domain/usecases/EscanearDocumentoUseCase';
 import { EnviarFacturaUseCase } from '@domain/usecases/EnviarFacturaUseCase';
 import { ExportarFacturaUseCase } from '@domain/usecases/ExportarFacturaUseCase';
+import { ExportarPeriodoUseCase } from '@domain/usecases/ExportarPeriodoUseCase';
 import { ExtraerFacturaUseCase } from '@domain/usecases/ExtraerFacturaUseCase';
 import { GuardarConfiguracionUseCase } from '@domain/usecases/GuardarConfiguracionUseCase';
 import { InstalarActualizacionUseCase } from '@domain/usecases/InstalarActualizacionUseCase';
@@ -37,13 +44,21 @@ import { ObtenerConfiguracionUseCase } from '@domain/usecases/ObtenerConfiguraci
 import { GuardarFacturaUseCase } from '@domain/usecases/GuardarFacturaUseCase';
 import { ObtenerFacturaGuardadaUseCase } from '@domain/usecases/ObtenerFacturaGuardadaUseCase';
 import { ObtenerUltimasFacturasUseCase } from '@domain/usecases/ObtenerUltimasFacturasUseCase';
+import { ObtenerFacturasDelPeriodoUseCase } from '@domain/usecases/ObtenerFacturasDelPeriodoUseCase';
 import { ProbarConexionUseCase } from '@domain/usecases/ProbarConexionUseCase';
+import { ResumirPeriodoUseCase } from '@domain/usecases/ResumirPeriodoUseCase';
+import { RevisarCoherenciaFacturaUseCase } from '@domain/usecases/RevisarCoherenciaFacturaUseCase';
 import { ValidarFacturaUseCase } from '@domain/usecases/ValidarFacturaUseCase';
 
 // Raíz de composición: único lugar que decide qué implementación usa cada contrato.
 // La presentación pide los casos de uso acá y nunca conoce la capa de datos.
 const facturaLocalRepository = new FacturaLocalRepositoryImpl(new FacturaSqliteDataSource(), new FotosLocalesDataSource());
-const exportadorRepository = new ExportadorFacturaRepositoryImpl(new ExcelDataSource(), new ArchivosDataSource());
+const archivosDataSource = new ArchivosDataSource();
+const exportadorRepository = new ExportadorFacturaRepositoryImpl(new ExcelDataSource(), archivosDataSource);
+const exportadorReporteRepository = new ExportadorReporteRepositoryImpl(
+  { xlsx: new ReporteExcelDataSource(), csv: new ReporteCsvDataSource(), pdf: new ReportePdfDataSource() },
+  archivosDataSource,
+);
 const configuracionRepository = new ConfiguracionRepositoryImpl(new ConfiguracionStorageDataSource());
 const actualizacionRepository = new ActualizacionRepositoryImpl(new ActualizacionesExpoDataSource());
 const versionApkRepository = new VersionApkRepositoryImpl(new VersionApkHttpDataSource(), new InstaladorApkExpoDataSource());
@@ -76,6 +91,12 @@ export const container = {
   escanearDocumento: new EscanearDocumentoUseCase(escanerRepository, leerQrFacturaUseCase),
   leerFactura: new LeerFacturaUseCase(extraerFacturaUseCase),
   validarFactura: new ValidarFacturaUseCase(),
+  revisarCoherencia: new RevisarCoherenciaFacturaUseCase(),
+  buscarFacturaDuplicada: new BuscarFacturaDuplicadaUseCase(facturaLocalRepository),
+  buscarEmisorConocido: new BuscarEmisorConocidoUseCase(facturaLocalRepository),
+  obtenerFacturasDelPeriodo: new ObtenerFacturasDelPeriodoUseCase(facturaLocalRepository),
+  resumirPeriodo: new ResumirPeriodoUseCase(),
+  exportarPeriodo: new ExportarPeriodoUseCase(exportadorReporteRepository, facturaLocalRepository),
   // Envío al servidor: pendiente de conectar (la app hoy guarda en el celular). Ver docs/ARQUITECTURA.md.
   enviarFactura: new EnviarFacturaUseCase(servidorRepository, configuracionRepository),
   obtenerConfiguracion: new ObtenerConfiguracionUseCase(configuracionRepository),

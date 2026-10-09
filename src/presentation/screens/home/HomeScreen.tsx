@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { USUARIO_PROVISORIO } from '@core/config/usuarioProvisorio';
@@ -25,7 +25,19 @@ export function HomeScreen() {
         <ScanCard onPress={() => router.push('/escaner')} />
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Últimos escaneos</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Últimos escaneos</Text>
+            {facturas.length > 0 ? (
+              <Pressable
+                onPress={() => router.push('/historial')}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="Ver todo el historial"
+              >
+                <Text style={styles.sectionLink}>Ver todo</Text>
+              </Pressable>
+            ) : null}
+          </View>
           {isLoading ? <ActivityIndicator color={colors.primary} /> : null}
           {hasError ? <Text style={styles.message}>No se pudieron cargar las facturas.</Text> : null}
           {!isLoading && !hasError && facturas.length === 0 ? (

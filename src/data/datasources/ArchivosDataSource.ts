@@ -17,6 +17,11 @@ export class ArchivosDataSource {
     archivo.write(base64, { encoding: 'base64' });
   }
 
+  /** Crea una subcarpeta dentro de la que eligió el usuario. */
+  crearSubcarpeta(carpeta: Directory, nombre: string): Directory {
+    return carpeta.createDirectory(nombre);
+  }
+
   async copiarACarpeta(carpeta: Directory, origenUri: string, nombre: string, tipoMime: string): Promise<void> {
     const base64 = await new File(origenUri).base64();
     this.guardarBase64EnCarpeta(carpeta, nombre, tipoMime, base64);
