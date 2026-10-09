@@ -45,5 +45,6 @@ export function facturaExtraidaToEntity(dto: FacturaExtraidaDto): Factura {
     importeNeto: aNumero(dto.importe_neto),
     importeIva: aNumero(dto.importe_iva),
     importeTotal: aNumero(dto.importe_total),
+    categoria: '',
   };
 }

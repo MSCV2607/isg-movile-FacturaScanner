@@ -44,6 +44,12 @@ const MIGRACIONES: string[] = [
   CREATE INDEX idx_factura_items_factura ON factura_items(factura_id);
   CREATE INDEX idx_factura_fotos_factura ON factura_fotos(factura_id);
   `,
+  // Versión 2: rubro del gasto, y índices para buscar duplicados, emisores conocidos y períodos.
+  `
+  ALTER TABLE facturas ADD COLUMN categoria TEXT NOT NULL DEFAULT '';
+  CREATE INDEX idx_facturas_comprobante ON facturas(emisor_cuit, punto_venta, numero);
+  CREATE INDEX idx_facturas_fecha ON facturas(fecha_emision);
+  `,
 ];
 
 async function migrar(base: SQLiteDatabase): Promise<void> {
@@ -88,8 +94,8 @@ export class FacturaSqliteDataSource implements FacturasLocalesDataSource {
       const resultado = await base.runAsync(
         `INSERT INTO facturas (
           creada_en, emisor_razon_social, emisor_cuit, emisor_condicion_fiscal, tipo_comprobante, letra,
-          punto_venta, numero, fecha_emision, moneda, importe_neto, importe_iva, importe_total
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          punto_venta, numero, fecha_emision, moneda, importe_neto, importe_iva, importe_total, categoria
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           fila.creada_en,
           fila.emisor_razon_social,
@@ -104,6 +110,7 @@ export class FacturaSqliteDataSource implements FacturasLocalesDataSource {
           fila.importe_neto,
           fila.importe_iva,
           fila.importe_total,
+          fila.categoria,
         ],
       );
       facturaId = resultado.lastInsertRowId;
@@ -141,6 +148,31 @@ export class FacturaSqliteDataSource implements FacturasLocalesDataSource {
   async obtenerUltimas(cantidad: number): Promise<FacturaFilaDto[]> {
     const base = await this.abrir();
     return base.getAllAsync<FacturaFilaDto>('SELECT * FROM facturas ORDER BY id DESC LIMIT ?', [cantidad]);
+  }
+
+  async obtenerTodas(desde: string | null, hasta: string | null): Promise<FacturaFilaDto[]> {
+    const base = await this.abrir();
+    return base.getAllAsync<FacturaFilaDto>(
+      `SELECT * FROM facturas
+       WHERE (? IS NULL OR fecha_emision >= ?) AND (? IS NULL OR fecha_emision <= ?)
+       ORDER BY fecha_emision DESC, id DESC`,
+      [desde, desde, hasta, hasta],
+    );
+  }
+
+  async buscarPorComprobante(cuit: string, puntoVenta: number, numero: number): Promise<FacturaFilaDto[]> {
+    const base = await this.abrir();
+    return base.getAllAsync<FacturaFilaDto>(
+      'SELECT * FROM facturas WHERE emisor_cuit = ? AND punto_venta = ? AND numero = ? ORDER BY id DESC',
+      [cuit, puntoVenta, numero],
+    );
+  }
+
+  async obtenerUltimaDeEmisor(cuit: string): Promise<FacturaFilaDto | null> {
+    const base = await this.abrir();
+    return base.getFirstAsync<FacturaFilaDto>('SELECT * FROM facturas WHERE emisor_cuit = ? ORDER BY id DESC LIMIT 1', [
+      cuit,
+    ]);
   }
 
   async obtener(facturaId: number): Promise<FacturaCompletaDto | null> {

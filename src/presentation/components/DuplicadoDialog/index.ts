@@ -1,0 +1,1 @@
+export { DuplicadoDialog } from './DuplicadoDialog';

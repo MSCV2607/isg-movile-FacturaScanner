@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 
-import { colors, fontFamily, fontSize, fontWeight, spacing } from '@presentation/theme';
+import { colors, fontFamily, fontSize, fontWeight, radius, spacing } from '@presentation/theme';
 
 export const styles = StyleSheet.create({
   container: {
@@ -43,5 +43,24 @@ export const styles = StyleSheet.create({
     fontWeight: fontWeight.bold,
     fontFamily: fontFamily.mono,
     color: colors.textPrimary,
+  },
+  rowPressed: {
+    opacity: 0.6,
+  },
+  add: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    minHeight: 44,
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: colors.border,
+  },
+  addLabel: {
+    fontSize: fontSize.label,
+    fontWeight: fontWeight.semibold,
+    color: colors.primary,
   },
 });

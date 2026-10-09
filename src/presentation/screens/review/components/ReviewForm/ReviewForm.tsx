@@ -1,9 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { CampoFactura, Factura } from '@domain/entities/Factura';
+import { formatearImporte } from '@core/utils/formatters';
+import { CampoFactura, Factura, ItemFactura } from '@domain/entities/Factura';
+import { DuplicadoDialog } from '@presentation/components/DuplicadoDialog';
 import { PrimaryButton } from '@presentation/components/PrimaryButton';
 import { SecondaryButton } from '@presentation/components/SecondaryButton';
 import { TextField } from '@presentation/components/TextField';
@@ -13,8 +16,11 @@ import { useFacturaEnCurso } from '@presentation/state/FacturaEnCursoContext';
 import { colors } from '@presentation/theme';
 
 import { AvisoLectura } from '../AvisoLectura';
+import { CategoriaSelector } from '../CategoriaSelector';
+import { ItemEditorSheet } from '../ItemEditorSheet';
 import { ItemsFactura } from '../ItemsFactura';
 import { styles } from './ReviewForm.styles';
+import { TEXTOS_REVISION } from './ReviewForm.textos';
 
 type ReviewFormProps = {
   factura: Factura;
@@ -23,8 +29,11 @@ type ReviewFormProps = {
 export function ReviewForm({ factura }: ReviewFormProps) {
   const router = useRouter();
   const { limpiar, discrepancias, avisoLectura } = useFacturaEnCurso();
-  const { guardando, guardar } = useGuardarFactura();
-  const { valores, errores, cambiar, validar } = useFormularioFactura(factura);
+  const { guardando, duplicado, solicitarGuardado, guardarIgual, cerrarAviso } = useGuardarFactura();
+  const formulario = useFormularioFactura(factura);
+  const { valores, errores, items, categoria, cuitValido, delHistorial, diferenciaDeTotal, cambiar, validar } = formulario;
+  // null = hoja cerrada; indice = ítem que se edita; -1 = ítem nuevo.
+  const [itemEnEdicion, setItemEnEdicion] = useState<number | null>(null);
 
   /** Si la IA había leído otro valor que el QR, se avisa debajo del campo (se usó el del QR). */
   const notaDe = (campo: CampoFactura): string | undefined => {
@@ -32,16 +41,41 @@ export function ReviewForm({ factura }: ReviewFormProps) {
     return discrepancia ? `La IA había leído "${discrepancia.valorIa}". Se usó el dato del QR de ARCA.` : undefined;
   };
 
+  const notaHistorial = (campo: 'razonSocial' | 'condicionFiscal' | 'categoria'): string | undefined =>
+    delHistorial.includes(campo) ? TEXTOS_REVISION.deTuHistorial : undefined;
+
+  const avisoTotal = diferenciaDeTotal
+    ? TEXTOS_REVISION.totalNoCierra(formatearImporte(diferenciaDeTotal.sumaNetoIva), formatearImporte(diferenciaDeTotal.total))
+    : undefined;
+
   const descripcionComprobante = `${factura.tipoComprobante} ${factura.letra}`.trim();
 
   const alGuardar = () => {
     const facturaValida = validar();
-    if (facturaValida) guardar(facturaValida);
+    if (facturaValida) solicitarGuardado(facturaValida);
   };
 
   const alDescartar = () => {
     limpiar();
     router.replace('/home');
+  };
+
+  const alVerGuardada = () => {
+    if (!duplicado) return;
+    const { id } = duplicado.existente;
+    cerrarAviso();
+    router.push({ pathname: '/detalle/[id]', params: { id: String(id) } });
+  };
+
+  const alGuardarItem = (item: ItemFactura) => {
+    if (itemEnEdicion === null || itemEnEdicion < 0) formulario.agregarItem(item);
+    else formulario.reemplazarItem(itemEnEdicion, item);
+    setItemEnEdicion(null);
+  };
+
+  const alEliminarItem = () => {
+    if (itemEnEdicion !== null && itemEnEdicion >= 0) formulario.quitarItem(itemEnEdicion);
+    setItemEnEdicion(null);
   };
 
   return (
@@ -59,6 +93,7 @@ export function ReviewForm({ factura }: ReviewFormProps) {
             value={valores.razonSocial}
             onChangeText={(texto) => cambiar('razonSocial', texto)}
             errorMessage={errores.razonSocial}
+            noteMessage={notaHistorial('razonSocial')}
             autoCapitalize="words"
           />
           <TextField
@@ -67,6 +102,7 @@ export function ReviewForm({ factura }: ReviewFormProps) {
             onChangeText={(texto) => cambiar('cuitEmisor', texto)}
             errorMessage={errores.cuitEmisor}
             noteMessage={notaDe('cuitEmisor')}
+            okMessage={cuitValido ? TEXTOS_REVISION.cuitValido : undefined}
             keyboardType="number-pad"
           />
           <TextField
@@ -74,6 +110,12 @@ export function ReviewForm({ factura }: ReviewFormProps) {
             value={valores.condicionFiscal}
             onChangeText={(texto) => cambiar('condicionFiscal', texto)}
             errorMessage={errores.condicionFiscal}
+            noteMessage={notaHistorial('condicionFiscal')}
+          />
+          <CategoriaSelector
+            categoria={categoria}
+            nota={notaHistorial('categoria')}
+            onCambiar={formulario.cambiarCategoria}
           />
         </View>
 
@@ -122,7 +164,7 @@ export function ReviewForm({ factura }: ReviewFormProps) {
         </View>
 
         <View style={styles.card}>
-          <ItemsFactura items={factura.items} />
+          <ItemsFactura items={items} onEditar={setItemEnEdicion} onAgregar={() => setItemEnEdicion(-1)} />
         </View>
 
         <View style={styles.card}>
@@ -151,7 +193,7 @@ export function ReviewForm({ factura }: ReviewFormProps) {
             value={valores.importeTotal}
             onChangeText={(texto) => cambiar('importeTotal', texto)}
             errorMessage={errores.importeTotal}
-            noteMessage={notaDe('importeTotal')}
+            noteMessage={avisoTotal ?? notaDe('importeTotal')}
             keyboardType="decimal-pad"
           />
         </View>
@@ -172,6 +214,23 @@ export function ReviewForm({ factura }: ReviewFormProps) {
           </View>
         </View>
       </SafeAreaView>
+
+      <ItemEditorSheet
+        visible={itemEnEdicion !== null}
+        item={itemEnEdicion !== null && itemEnEdicion >= 0 ? (items[itemEnEdicion] ?? null) : null}
+        onGuardar={alGuardarItem}
+        onEliminar={alEliminarItem}
+        onCerrar={() => setItemEnEdicion(null)}
+      />
+
+      <DuplicadoDialog
+        visible={duplicado !== null}
+        nueva={duplicado?.nueva ?? null}
+        existente={duplicado?.existente ?? null}
+        onVerGuardada={alVerGuardada}
+        onGuardarIgual={guardarIgual}
+        onVolver={cerrarAviso}
+      />
     </>
   );
 }

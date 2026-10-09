@@ -20,6 +20,7 @@ function facturaDesdeQr(qr: DatosQrArca): Factura {
     importeNeto: 0,
     importeIva: 0,
     importeTotal: qr.importeTotal,
+    categoria: '',
   };
 }
 

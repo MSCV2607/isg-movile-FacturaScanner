@@ -16,6 +16,8 @@ export interface FacturaFilaDto {
   importe_neto: number;
   importe_iva: number;
   importe_total: number;
+  /** Rubro del gasto; texto vacío si no se eligió. */
+  categoria: string;
 }
 
 export interface ItemFilaDto {

@@ -1,0 +1,1 @@
+export { TopProveedores } from './TopProveedores';

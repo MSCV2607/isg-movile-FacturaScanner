@@ -43,6 +43,19 @@ export const styles = StyleSheet.create({
     fontFamily: fontFamily.mono,
     color: colors.textSecondary,
   },
+  badge: {
+    alignSelf: 'flex-start',
+    marginTop: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: 8,
+    backgroundColor: colors.surfaceMuted,
+  },
+  badgeLabel: {
+    fontSize: fontSize.tiny,
+    fontWeight: fontWeight.semibold,
+    color: colors.primary,
+  },
   summary: {
     alignItems: 'flex-end',
     gap: spacing.xs,

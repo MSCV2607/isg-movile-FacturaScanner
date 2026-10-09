@@ -43,6 +43,9 @@ Si se agregan o actualizan librerías nativas, permisos o íconos, o si se cambi
 Una actualización por aire solo llega a APK con el mismo `version`: **al cambiar algo nativo, subir `version`** (así los APK viejos no
 reciben código que no pueden ejecutar). Si solo se tocó código en `src`, no se cambia `version`.
 
+El historial, el resumen y la exportación (incluido el PDF con `pdf-lib`) son solo JavaScript: llegan por actualización por aire,
+sin APK nuevo. La migración de SQLite se aplica sola la primera vez que se abre la app actualizada.
+
 ## APK nuevo automático
 
 Al subir `version` en `app.json` y hacer merge a `develop`, el workflow **Compilar APK** (`.github/workflows/compilar-apk.yml`)
