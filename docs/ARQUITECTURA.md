@@ -132,3 +132,21 @@ usa Google Drive: detecta los bordes del papel, endereza, recorta, ofrece filtro
 - **Límites:** necesita Google Play Services y no funciona en Expo Go (el módulo se carga recién al escanear, así que el resto de la app
   sigue andando). El paquete es nativo: llega **con un APK nuevo**, no por actualización automática.
 - Configuración en `core/config/env.ts`: `MAXIMO_PAGINAS_ESCANEO`, `LADO_MAXIMO_PAGINA`, `CALIDAD_PAGINA`.
+
+## Lectura con IA: validación, segunda pasada y precisión
+- **Contrato:** `ExtractorFacturaRepository.extraer(imagenes, apiKey, correcciones?)` devuelve una `ExtraccionFactura`: la factura más
+  datos de control (CUIT del receptor, otros tributos, campos que la IA marcó como dudosos, proveedor).
+- **Segunda pasada** (`LeerFacturaUseCase`, activable con `CORREGIR_LECTURA_CON_IA` en `core/config/env.ts`): `problemasDeLectura`
+  revisa la lectura (CUIT, fecha, receptor = emisor, neto + IVA + otros tributos contra el total, suma de ítems; con QR se usa su
+  total como referencia). Si hay problemas, se vuelve a consultar a la IA mostrándoselos; la segunda lectura se acepta **solo si
+  tiene menos problemas** que la primera, y si falla se ignora (queda la primera).
+- **Prompt y esquema** (`data/datasources/facturaPrompt.ts`): reglas para casos argentinos (Factura C/Monotributo, "IVA contenido",
+  percepciones, notas de crédito, formato de importes, `PPPP-NNNNNNNN`) y `campos_dudosos`.
+- **Capa común** (`data/datasources/iaComun.ts`): llamada HTTP con tiempo máximo (distingue timeout de falta de conexión), reintentos
+  ante 404/429/≥500, mensajes de error unificados y lectura tolerante del JSON. Anthropic ahora también reintenta y avisa si la
+  respuesta se cortó por tamaño.
+- **Campos dudosos:** en la revisión se avisa debajo de cada campo que la IA marcó (si el QR de ARCA ya cubre el dato, no se marca).
+- **Precisión:** al guardar, `GuardarFacturaUseCase` anota en la tabla `lecturas_ia` (migración 4) qué se le mostró al usuario y qué
+  campos cambió. Es un registro "mejor esfuerzo": si falla, la factura se guarda igual. Configuración muestra el resumen
+  (`ObtenerPrecisionIaUseCase`) y el detalle de `correcciones` (JSON) sirve para afinar las instrucciones.
+- **Pendiente:** la clave de IA sigue en el celular; llevar la lectura al backend .NET requiere un endpoint que hoy no existe.

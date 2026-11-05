@@ -4,6 +4,8 @@ export interface FacturaExtraidaDto {
   emisor_razon_social: string;
   emisor_cuit: string;
   emisor_condicion_fiscal: string;
+  /** Los campos nuevos son opcionales: una IA o un dato viejo puede no traerlos. */
+  receptor_cuit?: string;
   tipo_comprobante: string;
   letra: string;
   punto_venta: number | string;
@@ -19,5 +21,7 @@ export interface FacturaExtraidaDto {
   }[];
   importe_neto: number;
   importe_iva: number;
+  importe_otros_tributos?: number;
   importe_total: number;
+  campos_dudosos?: string[];
 }

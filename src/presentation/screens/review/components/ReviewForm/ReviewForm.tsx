@@ -23,7 +23,7 @@ type ReviewFormProps = {
 /** Revisión de una factura recién leída: se corrige y se guarda por primera vez. */
 export function ReviewForm({ factura }: ReviewFormProps) {
   const router = useRouter();
-  const { limpiar, discrepancias, avisoLectura } = useFacturaEnCurso();
+  const { limpiar, discrepancias, avisoLectura, camposDudosos } = useFacturaEnCurso();
   const { guardando, duplicado, solicitarGuardado, guardarIgual, cerrarAviso } = useGuardarFactura();
   const formulario = useFormularioFactura(factura);
   const { categorias } = useCategorias();
@@ -53,6 +53,7 @@ export function ReviewForm({ factura }: ReviewFormProps) {
         categoriasDisponibles={categorias}
         discrepancias={discrepancias}
         avisoLectura={avisoLectura}
+        camposDudosos={camposDudosos}
       />
 
       <SafeAreaView style={styles.footer} edges={['bottom']}>

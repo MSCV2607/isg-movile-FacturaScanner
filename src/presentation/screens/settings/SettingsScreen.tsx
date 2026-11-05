@@ -11,6 +11,7 @@ import { PurpleHeader } from '@presentation/components/PurpleHeader';
 import { useBuscarActualizaciones } from '@presentation/hooks/useBuscarActualizaciones';
 import { useApariencia } from '@presentation/hooks/useApariencia';
 import { useConfiguracion } from '@presentation/hooks/useConfiguracion';
+import { usePrecisionIa } from '@presentation/hooks/usePrecisionIa';
 import { useFacturaEnCurso } from '@presentation/state/FacturaEnCursoContext';
 import { logos } from '@presentation/theme';
 
@@ -28,6 +29,7 @@ export function SettingsScreen() {
   const configuracion = useConfiguracion();
   const actualizaciones = useBuscarActualizaciones();
   const apariencia = useApariencia();
+  const { precision } = usePrecisionIa();
 
   const guardar = async () => {
     const seGuardo = await configuracion.guardar();
@@ -63,7 +65,7 @@ export function SettingsScreen() {
           onTokenChange={configuracion.cambiarToken}
           onProbarPress={configuracion.probarConexion}
         />
-        <AiSection apiKey={configuracion.apiKeyIa} onApiKeyChange={configuracion.cambiarApiKey} />
+        <AiSection apiKey={configuracion.apiKeyIa} onApiKeyChange={configuracion.cambiarApiKey} precision={precision} />
         <DatosSection onCategorias={() => router.push('/categorias')} onRespaldo={() => router.push('/respaldo')} />
         <AparienciaSection tema={apariencia.tema} onElegir={apariencia.elegir} />
         <UpdatesSection

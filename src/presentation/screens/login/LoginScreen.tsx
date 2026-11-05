@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { Image, ScrollView, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { APP_NAME, APP_VERSION } from '@core/config/appInfo';
@@ -12,13 +12,13 @@ import { logos } from '@presentation/theme';
 
 import { styles } from './LoginScreen.styles';
 
-// Ingreso simulado: todavía no se validan las credenciales, solo se navega al inicio.
+// Ingreso contra la api auth de la empresa elegida (URLs en core/config/env.ts).
 export function LoginScreen() {
   const router = useRouter();
   const login = useLogin();
 
-  const ingresar = () => {
-    if (login.validar()) router.replace('/home');
+  const ingresar = async () => {
+    if (await login.ingresar()) router.replace('/home');
   };
 
   return (
@@ -58,9 +58,22 @@ export function LoginScreen() {
             placeholder="tu.usuario"
             autoCapitalize="none"
             autoComplete="username"
+            value={login.usuario}
+            onChangeText={login.cambiarUsuario}
+            errorMessage={login.errorUsuario}
           />
-          <PasswordField label="Contraseña" placeholder="Tu contraseña" />
-          <PrimaryButton label="Ingresar" onPress={ingresar} />
+          <PasswordField
+            label="Contraseña"
+            placeholder="Tu contraseña"
+            value={login.password}
+            onChangeText={login.cambiarPassword}
+            errorMessage={login.errorPassword}
+          />
+          {login.errorGeneral !== '' ? <Text style={styles.errorGeneral}>{login.errorGeneral}</Text> : null}
+          <PrimaryButton label="Ingresar" onPress={ingresar} loading={login.ingresando} />
+          <Pressable onPress={() => router.push('/registro')} style={styles.crearCuenta} accessibilityRole="button">
+            <Text style={styles.crearCuentaTexto}>¿No tenés cuenta? Crear cuenta</Text>
+          </Pressable>
         </View>
 
         <Text style={styles.version}>{`${APP_NAME} · versión ${APP_VERSION}`}</Text>

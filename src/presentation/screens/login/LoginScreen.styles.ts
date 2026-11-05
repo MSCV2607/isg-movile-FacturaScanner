@@ -47,6 +47,20 @@ export const styles = StyleSheet.create({
     fontWeight: fontWeight.extrabold,
     color: colors.textPrimary,
   },
+  errorGeneral: {
+    fontSize: fontSize.caption,
+    color: colors.danger,
+    textAlign: 'center',
+  },
+  crearCuenta: {
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+  },
+  crearCuentaTexto: {
+    fontSize: fontSize.body,
+    fontWeight: fontWeight.semibold,
+    color: colors.primary,
+  },
   version: {
     fontSize: fontSize.caption,
     color: colors.textSecondary,

@@ -1,9 +1,20 @@
 import { APP_VERSION } from '@core/config/appInfo';
-import { PROVEEDOR_IA, USAR_EXTRACTOR_SIMULADO, USAR_SERVIDOR_SIMULADO } from '@core/config/env';
+import {
+  CORREGIR_LECTURA_CON_IA,
+  PROVEEDOR_IA,
+  URL_API_EMPRESA,
+  USAR_EXTRACTOR_SIMULADO,
+  USAR_SERVIDOR_SIMULADO,
+} from '@core/config/env';
 import { ConfiguracionStorageDataSource } from '@data/datasources/ConfiguracionStorageDataSource';
 import { ActualizacionesExpoDataSource } from '@data/datasources/ActualizacionesExpoDataSource';
 import { AjustesStorageDataSource } from '@data/datasources/AjustesStorageDataSource';
 import { ArchivosDataSource } from '@data/datasources/ArchivosDataSource';
+import { AuthHttpDataSource } from '@data/datasources/AuthHttpDataSource';
+import { EmpresasHttpDataSource } from '@data/datasources/EmpresasHttpDataSource';
+import { EmpresasProvisoriasDataSource } from '@data/datasources/EmpresasProvisoriasDataSource';
+import { InstalacionStorageDataSource } from '@data/datasources/InstalacionStorageDataSource';
+import { SesionStorageDataSource } from '@data/datasources/SesionStorageDataSource';
 import { EscanerDocumentosMlKitDataSource } from '@data/datasources/EscanerDocumentosMlKitDataSource';
 import { ExcelDataSource } from '@data/datasources/ExcelDataSource';
 import { ExtractorAnthropicDataSource } from '@data/datasources/ExtractorAnthropicDataSource';
@@ -20,6 +31,10 @@ import { ServidorSimuladoDataSource } from '@data/datasources/ServidorSimuladoDa
 import { VersionApkHttpDataSource } from '@data/datasources/VersionApkHttpDataSource';
 import { ActualizacionRepositoryImpl } from '@data/repositories/ActualizacionRepositoryImpl';
 import { AjustesRepositoryImpl } from '@data/repositories/AjustesRepositoryImpl';
+import { AuthRepositoryImpl } from '@data/repositories/AuthRepositoryImpl';
+import { EmpresaRepositoryImpl } from '@data/repositories/EmpresaRepositoryImpl';
+import { InstalacionRepositoryImpl } from '@data/repositories/InstalacionRepositoryImpl';
+import { SesionRepositoryImpl } from '@data/repositories/SesionRepositoryImpl';
 import { RespaldoRepositoryImpl } from '@data/repositories/RespaldoRepositoryImpl';
 import { ConfiguracionRepositoryImpl } from '@data/repositories/ConfiguracionRepositoryImpl';
 import { EscanerDocumentosRepositoryImpl } from '@data/repositories/EscanerDocumentosRepositoryImpl';
@@ -33,7 +48,10 @@ import { ActualizarFacturaUseCase } from '@domain/usecases/ActualizarFacturaUseC
 import { CrearRespaldoUseCase } from '@domain/usecases/CrearRespaldoUseCase';
 import { EliminarFacturaUseCase } from '@domain/usecases/EliminarFacturaUseCase';
 import { GestionarCategoriasUseCase } from '@domain/usecases/GestionarCategoriasUseCase';
+import { IniciarSesionUseCase } from '@domain/usecases/IniciarSesionUseCase';
 import { ObtenerAjustesUseCase } from '@domain/usecases/ObtenerAjustesUseCase';
+import { ObtenerEmpresasUseCase } from '@domain/usecases/ObtenerEmpresasUseCase';
+import { RegistrarUsuarioUseCase } from '@domain/usecases/RegistrarUsuarioUseCase';
 import { ObtenerEvolucionMensualUseCase } from '@domain/usecases/ObtenerEvolucionMensualUseCase';
 import { RestaurarRespaldoUseCase } from '@domain/usecases/RestaurarRespaldoUseCase';
 import { BuscarActualizacionUseCase } from '@domain/usecases/BuscarActualizacionUseCase';
@@ -49,6 +67,7 @@ import { GuardarConfiguracionUseCase } from '@domain/usecases/GuardarConfiguraci
 import { InstalarActualizacionUseCase } from '@domain/usecases/InstalarActualizacionUseCase';
 import { InstalarVersionApkUseCase } from '@domain/usecases/InstalarVersionApkUseCase';
 import { LeerFacturaUseCase } from '@domain/usecases/LeerFacturaUseCase';
+import { ObtenerPrecisionIaUseCase } from '@domain/usecases/ObtenerPrecisionIaUseCase';
 import { LeerQrFacturaUseCase } from '@domain/usecases/LeerQrFacturaUseCase';
 import { ObtenerConfiguracionUseCase } from '@domain/usecases/ObtenerConfiguracionUseCase';
 import { GuardarFacturaUseCase } from '@domain/usecases/GuardarFacturaUseCase';
@@ -81,12 +100,23 @@ const servidorRepository = new ServidorRepositoryImpl(
   USAR_SERVIDOR_SIMULADO ? new ServidorSimuladoDataSource() : new ServidorHttpDataSource(),
 );
 
+// Empresas y login: con URL_API_EMPRESA vacía la lista es provisoria; el auth sale siempre de la URL que tiene cada empresa.
+const empresaRepository = new EmpresaRepositoryImpl(
+  URL_API_EMPRESA.trim() !== '' ? new EmpresasHttpDataSource(URL_API_EMPRESA.trim()) : new EmpresasProvisoriasDataSource(),
+);
+const authRepository = new AuthRepositoryImpl(new AuthHttpDataSource());
+const instalacionRepository = new InstalacionRepositoryImpl(new InstalacionStorageDataSource());
+const sesionRepository = new SesionRepositoryImpl(new SesionStorageDataSource());
+
 const extractorDataSource = USAR_EXTRACTOR_SIMULADO
   ? new ExtractorSimuladoDataSource()
   : PROVEEDOR_IA === 'gemini'
     ? new ExtractorGeminiDataSource()
     : new ExtractorAnthropicDataSource();
-const extractorRepository = new ExtractorFacturaRepositoryImpl(extractorDataSource);
+const extractorRepository = new ExtractorFacturaRepositoryImpl(
+  extractorDataSource,
+  USAR_EXTRACTOR_SIMULADO ? 'simulado' : PROVEEDOR_IA,
+);
 
 const leerQrFacturaUseCase = new LeerQrFacturaUseCase();
 const extraerFacturaUseCase = new ExtraerFacturaUseCase(extractorRepository, configuracionRepository);
@@ -98,12 +128,13 @@ export const container = {
   instalarVersionApk: new InstalarVersionApkUseCase(versionApkRepository),
   guardarFactura: new GuardarFacturaUseCase(facturaLocalRepository),
   obtenerUltimasFacturas: new ObtenerUltimasFacturasUseCase(facturaLocalRepository),
+  obtenerPrecisionIa: new ObtenerPrecisionIaUseCase(facturaLocalRepository),
   obtenerFacturaGuardada: new ObtenerFacturaGuardadaUseCase(facturaLocalRepository),
   exportarFactura: new ExportarFacturaUseCase(exportadorRepository),
   extraerFactura: extraerFacturaUseCase,
   leerQrFactura: leerQrFacturaUseCase,
   escanearDocumento: new EscanearDocumentoUseCase(escanerRepository, leerQrFacturaUseCase),
-  leerFactura: new LeerFacturaUseCase(extraerFacturaUseCase),
+  leerFactura: new LeerFacturaUseCase(extraerFacturaUseCase, CORREGIR_LECTURA_CON_IA),
   validarFactura: new ValidarFacturaUseCase(),
   revisarCoherencia: new RevisarCoherenciaFacturaUseCase(),
   buscarFacturaDuplicada: new BuscarFacturaDuplicadaUseCase(facturaLocalRepository),
@@ -123,4 +154,7 @@ export const container = {
   obtenerConfiguracion: new ObtenerConfiguracionUseCase(configuracionRepository),
   guardarConfiguracion: new GuardarConfiguracionUseCase(configuracionRepository),
   probarConexion: new ProbarConexionUseCase(servidorRepository),
+  obtenerEmpresas: new ObtenerEmpresasUseCase(empresaRepository),
+  iniciarSesion: new IniciarSesionUseCase(authRepository, instalacionRepository, sesionRepository),
+  registrarUsuario: new RegistrarUsuarioUseCase(authRepository),
 };
