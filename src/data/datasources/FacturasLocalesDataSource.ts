@@ -1,4 +1,5 @@
 import { FacturaFilaDto, FotoFilaDto, ItemFilaDto, NuevaFacturaDto } from '../dtos/FacturaGuardadaDto';
+import { LecturaIaFilaDto, NuevaLecturaIaDto } from '../dtos/LecturaIaDto';
 
 export interface FacturaCompletaDto {
   fila: FacturaFilaDto;
@@ -23,4 +24,7 @@ export interface FacturasLocalesDataSource {
   buscarPorComprobante(cuit: string, puntoVenta: number, numero: number): Promise<FacturaFilaDto[]>;
   obtenerUltimaDeEmisor(cuit: string): Promise<FacturaFilaDto | null>;
   obtener(facturaId: number): Promise<FacturaCompletaDto | null>;
+  /** Anota cómo se leyó con IA una factura. Se borra junto con la factura. */
+  insertarLecturaIa(facturaId: number, lectura: NuevaLecturaIaDto): Promise<void>;
+  obtenerLecturasIa(): Promise<LecturaIaFilaDto[]>;
 }

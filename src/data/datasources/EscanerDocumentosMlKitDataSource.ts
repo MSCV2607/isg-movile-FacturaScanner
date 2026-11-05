@@ -1,6 +1,6 @@
 import { scanFromURLAsync } from 'expo-camera';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
-import { Image } from 'react-native';
+import { Image, TurboModuleRegistry } from 'react-native';
 
 import { CALIDAD_PAGINA, LADO_MAXIMO_PAGINA } from '@core/config/env';
 import { ErrorEscaner } from '@core/errors/ErrorEscaner';
@@ -24,6 +24,7 @@ const ZONAS_PARA_QR: Zona[] = [
 const SIN_SOPORTE = 'El escáner solo funciona en la app instalada (APK), no en Expo Go.';
 const NO_ABRIO =
   'No se pudo abrir el escáner. Revisá que Google Play Services esté actualizado y, la primera vez, que haya internet.';
+const SIN_PERMISO_CAMARA = 'Falta el permiso de la cámara. Activalo en los ajustes del celular.';
 const NO_PREPARO = 'No se pudieron preparar las páginas escaneadas. Probá de nuevo.';
 
 /**
@@ -54,7 +55,11 @@ export class EscanerDocumentosMlKitDataSource implements EscanerDocumentosDataSo
 
   /** Abre el escáner y devuelve las rutas de las páginas, o null si el usuario lo cerró sin terminar. */
   private async abrirEscaner(maximoPaginas: number): Promise<string[] | null> {
-    // Se carga recién acá: en Expo Go el módulo nativo no existe y no debe romper el resto de la app.
+    // En Expo Go el módulo nativo no existe. Cargar el paquete igual haría saltar la pantalla roja de desarrollo
+    // aunque el error se atrape, así que primero se pregunta si está; si no, se usa la cámara común.
+    if (TurboModuleRegistry.get('DocumentScanner') === null) return this.abrirCamaraComun();
+
+    // Se carga recién acá: si falta, no debe romper el resto de la app.
     let modulo: typeof import('react-native-document-scanner-plugin');
     try {
       modulo = await import('react-native-document-scanner-plugin');
@@ -70,6 +75,31 @@ export class EscanerDocumentosMlKitDataSource implements EscanerDocumentosDataSo
       if (status === modulo.ScanDocumentResponseStatus.Cancel) return null;
       return scannedImages && scannedImages.length > 0 ? scannedImages : null;
     } catch {
+      throw new ErrorEscaner(NO_ABRIO);
+    }
+  }
+
+  /**
+   * Solo para probar en Expo Go, donde no está el escáner de Google: una foto común con la cámara, sin detección de
+   * bordes ni recorte. En el APK instalado no se usa. Si el paquete tampoco está, se avisa que hace falta el APK.
+   */
+  private async abrirCamaraComun(): Promise<string[] | null> {
+    let selector: typeof import('expo-image-picker');
+    try {
+      selector = await import('expo-image-picker');
+    } catch {
+      throw new ErrorEscaner(SIN_SOPORTE);
+    }
+
+    try {
+      const permiso = await selector.requestCameraPermissionsAsync();
+      if (!permiso.granted) throw new ErrorEscaner(SIN_PERMISO_CAMARA);
+
+      const resultado = await selector.launchCameraAsync({ quality: 1 });
+      if (resultado.canceled) return null;
+      return resultado.assets.map((foto) => foto.uri);
+    } catch (error) {
+      if (error instanceof ErrorEscaner) throw error;
       throw new ErrorEscaner(NO_ABRIO);
     }
   }

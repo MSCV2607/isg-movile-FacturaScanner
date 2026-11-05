@@ -1,9 +1,10 @@
 import { createContext, ReactNode, useCallback, useContext, useMemo, useState } from 'react';
 
-import { Factura } from '@domain/entities/Factura';
+import { CampoFactura, Factura } from '@domain/entities/Factura';
 import { FacturaGuardada } from '@domain/entities/FacturaGuardada';
 import { ImagenFactura } from '@domain/entities/ImagenFactura';
 import { Discrepancia, LecturaFactura } from '@domain/entities/LecturaFactura';
+import { RegistroLectura } from '@domain/entities/RegistroLectura';
 
 type FacturaEnCursoValue = {
   /** Factura que se está revisando (los datos que leyó la IA, ya con las correcciones del usuario). */
@@ -17,6 +18,10 @@ type FacturaEnCursoValue = {
   discrepancias: Discrepancia[];
   /** Aviso de la lectura (por ejemplo, que la IA falló y solo se usó el QR). */
   avisoLectura: string | null;
+  /** Campos que la IA marcó como dudosos (y que el QR no cubre). */
+  camposDudosos: CampoFactura[];
+  /** Cómo se hizo la lectura, para anotar al guardar qué corrigió el usuario. */
+  registroLectura: RegistroLectura | null;
   iniciarRevision: (lectura: LecturaFactura, fotos: ImagenFactura[]) => void;
   actualizarFactura: (factura: Factura) => void;
   registrarGuardada: (guardada: FacturaGuardada) => void;
@@ -34,6 +39,8 @@ export function FacturaEnCursoProvider({ children }: { children: ReactNode }) {
   const [errorAlGuardar, setErrorAlGuardar] = useState<string | null>(null);
   const [discrepancias, setDiscrepancias] = useState<Discrepancia[]>([]);
   const [avisoLectura, setAvisoLectura] = useState<string | null>(null);
+  const [camposDudosos, setCamposDudosos] = useState<CampoFactura[]>([]);
+  const [registroLectura, setRegistroLectura] = useState<RegistroLectura | null>(null);
 
   const limpiar = useCallback(() => {
     setFactura(null);
@@ -42,12 +49,16 @@ export function FacturaEnCursoProvider({ children }: { children: ReactNode }) {
     setErrorAlGuardar(null);
     setDiscrepancias([]);
     setAvisoLectura(null);
+    setCamposDudosos([]);
+    setRegistroLectura(null);
   }, []);
 
   const iniciarRevision = useCallback((lectura: LecturaFactura, fotosNuevas: ImagenFactura[]) => {
     setFactura(lectura.factura);
     setDiscrepancias(lectura.discrepancias);
     setAvisoLectura(lectura.aviso);
+    setCamposDudosos(lectura.camposDudosos);
+    setRegistroLectura(lectura.registro);
     setFotos(fotosNuevas);
     setGuardada(null);
     setErrorAlGuardar(null);
@@ -68,13 +79,27 @@ export function FacturaEnCursoProvider({ children }: { children: ReactNode }) {
       errorAlGuardar,
       discrepancias,
       avisoLectura,
+      camposDudosos,
+      registroLectura,
       iniciarRevision,
       actualizarFactura: setFactura,
       registrarGuardada,
       registrarError: setErrorAlGuardar,
       limpiar,
     }),
-    [factura, fotos, guardada, errorAlGuardar, discrepancias, avisoLectura, iniciarRevision, registrarGuardada, limpiar],
+    [
+      factura,
+      fotos,
+      guardada,
+      errorAlGuardar,
+      discrepancias,
+      avisoLectura,
+      camposDudosos,
+      registroLectura,
+      iniciarRevision,
+      registrarGuardada,
+      limpiar,
+    ],
   );
 
   return <FacturaEnCursoContext.Provider value={value}>{children}</FacturaEnCursoContext.Provider>;

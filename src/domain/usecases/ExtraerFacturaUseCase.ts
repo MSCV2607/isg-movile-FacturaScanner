@@ -1,4 +1,4 @@
-import { Factura } from '../entities/Factura';
+import { ExtraccionFactura } from '../entities/ExtraccionFactura';
 import { ImagenFactura } from '../entities/ImagenFactura';
 import { ConfiguracionRepository } from '../repositories/ConfiguracionRepository';
 import { ExtractorFacturaRepository } from '../repositories/ExtractorFacturaRepository';
@@ -10,8 +10,9 @@ export class ExtraerFacturaUseCase {
     private readonly configuracion: ConfiguracionRepository,
   ) {}
 
-  async ejecutar(imagenes: ImagenFactura[]): Promise<Factura> {
+  /** Con `correcciones`, es una segunda lectura de las mismas fotos que atiende los problemas de la anterior. */
+  async ejecutar(imagenes: ImagenFactura[], correcciones: string[] = []): Promise<ExtraccionFactura> {
     const { apiKeyIa } = await this.configuracion.obtener();
-    return this.extractor.extraer(imagenes, apiKeyIa);
+    return this.extractor.extraer(imagenes, apiKeyIa, correcciones);
   }
 }

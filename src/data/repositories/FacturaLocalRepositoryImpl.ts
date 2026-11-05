@@ -1,9 +1,11 @@
 import { facturaGuardadaMapper } from '@data/mappers/facturaGuardadaMapper';
+import { lecturaIaMapper } from '@data/mappers/lecturaIaMapper';
 import { EmisorConocido } from '@domain/entities/EmisorConocido';
 import { Factura } from '@domain/entities/Factura';
 import { FacturaGuardada } from '@domain/entities/FacturaGuardada';
 import { ImagenFactura } from '@domain/entities/ImagenFactura';
 import { RangoFechas } from '@domain/entities/RangoFechas';
+import { CorreccionCampo, LecturaIaGuardada, RegistroLectura } from '@domain/entities/RegistroLectura';
 import { ResumenFactura } from '@domain/entities/ResumenFactura';
 import { FacturaLocalRepository } from '@domain/repositories/FacturaLocalRepository';
 
@@ -77,5 +79,14 @@ export class FacturaLocalRepositoryImpl implements FacturaLocalRepository {
 
     const uris = completa.fotos.map((foto) => this.fotos.resolverUri(foto.ruta));
     return facturaGuardadaMapper.toEntity(completa.fila, completa.items, uris);
+  }
+
+  registrarLecturaIa(facturaId: number, lectura: RegistroLectura, correcciones: CorreccionCampo[]): Promise<void> {
+    return this.baseDeDatos.insertarLecturaIa(facturaId, lecturaIaMapper.toNuevaDto(lectura, correcciones, new Date()));
+  }
+
+  async obtenerLecturasIa(): Promise<LecturaIaGuardada[]> {
+    const filas = await this.baseDeDatos.obtenerLecturasIa();
+    return filas.map(lecturaIaMapper.toEntity);
   }
 }

@@ -1,6 +1,7 @@
 import { ErrorExtraccion } from '@core/errors/ErrorExtraccion';
 import { parsearFechaALaIso, soloDigitos } from '@core/utils/parsers';
-import { Factura } from '@domain/entities/Factura';
+import { ExtraccionFactura } from '@domain/entities/ExtraccionFactura';
+import { CampoFactura, Factura } from '@domain/entities/Factura';
 
 import { FacturaExtraidaDto } from '../dtos/FacturaExtraidaDto';
 
@@ -9,7 +10,28 @@ const aNumero = (valor: unknown): number => {
   return Number.isFinite(numero) ? numero : 0;
 };
 
-const aTexto = (valor: unknown): string => (typeof valor === 'string' ? valor.trim() : '');
+const aTexto = (valor: unknown): string => {
+  if (typeof valor === 'string') return valor.trim();
+  return typeof valor === 'number' && Number.isFinite(valor) ? String(valor) : '';
+};
+
+const CAMPO_POR_NOMBRE: Record<string, CampoFactura> = {
+  razon_social: 'razonSocial',
+  cuit: 'cuitEmisor',
+  condicion_fiscal: 'condicionFiscal',
+  punto_venta: 'puntoVenta',
+  numero: 'numero',
+  fecha: 'fecha',
+  importe_neto: 'importeNeto',
+  importe_iva: 'importeIva',
+  importe_total: 'importeTotal',
+};
+
+function aCamposDudosos(valor: unknown): CampoFactura[] {
+  if (!Array.isArray(valor)) return [];
+  const campos = valor.map((nombre) => CAMPO_POR_NOMBRE[aTexto(nombre)]).filter((campo) => campo !== undefined);
+  return [...new Set(campos)];
+}
 
 function normalizarFecha(fecha: unknown): string {
   const texto = aTexto(fecha);
@@ -48,5 +70,16 @@ export function facturaExtraidaToEntity(dto: FacturaExtraidaDto): Factura {
     categoria: '',
     medioPago: '',
     notas: '',
+  };
+}
+
+/** Igual que `facturaExtraidaToEntity`, más los datos de control que usa la validación de la lectura. */
+export function facturaExtraidaToExtraccion(dto: FacturaExtraidaDto, proveedor: string): ExtraccionFactura {
+  return {
+    factura: facturaExtraidaToEntity(dto),
+    cuitReceptor: soloDigitos(aTexto(dto.receptor_cuit)),
+    otrosTributos: aNumero(dto.importe_otros_tributos),
+    camposDudosos: aCamposDudosos(dto.campos_dudosos),
+    proveedor,
   };
 }

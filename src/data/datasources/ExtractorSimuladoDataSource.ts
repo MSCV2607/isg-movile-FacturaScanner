@@ -7,13 +7,14 @@ const DEMORA_MS = 1500;
 
 /** Devuelve una factura de ejemplo, sin llamar a la IA. Ver `USAR_EXTRACTOR_SIMULADO`. */
 export class ExtractorSimuladoDataSource implements ExtractorFacturaDataSource {
-  async extraer(_imagenes: ImagenFactura[], _apiKey: string): Promise<FacturaExtraidaDto> {
+  async extraer(_imagenes: ImagenFactura[], _apiKey: string, _correcciones?: string[]): Promise<FacturaExtraidaDto> {
     await new Promise((resolver) => setTimeout(resolver, DEMORA_MS));
     return {
       es_factura: true,
       emisor_razon_social: 'Distribuidora Del Sur S.R.L.',
       emisor_cuit: '30-71234567-1',
       emisor_condicion_fiscal: 'Responsable Inscripto',
+      receptor_cuit: '20123456786',
       tipo_comprobante: 'Factura',
       letra: 'A',
       punto_venta: 4,
@@ -26,7 +27,9 @@ export class ExtractorSimuladoDataSource implements ExtractorFacturaDataSource {
       ],
       importe_neto: 82000,
       importe_iva: 17220,
+      importe_otros_tributos: 0,
       importe_total: 99220,
+      campos_dudosos: [],
     };
   }
 }

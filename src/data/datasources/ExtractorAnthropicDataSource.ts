@@ -5,23 +5,20 @@ import { ImagenFactura } from '@domain/entities/ImagenFactura';
 import { FacturaExtraidaDto } from '../dtos/FacturaExtraidaDto';
 import { ExtractorFacturaDataSource } from './ExtractorFacturaDataSource';
 import { ESQUEMA, instruccionesPara } from './facturaPrompt';
+import { huboExito, MENSAJE_RESPUESTA_CORTADA, mensajeDeEstadoIa, pedirJson, reintentar } from './iaComun';
 
 const URL_API = 'https://api.anthropic.com/v1/messages';
 const VERSION_API = '2023-06-01';
-const TIEMPO_MAXIMO_MS = 60000;
 const NOMBRE_HERRAMIENTA = 'registrar_factura';
+const MAXIMO_TOKENS = 8192;
 
-function mensajeDeEstado(estado: number): string {
-  if (estado === 401) return 'La API key no es válida. Revisala en Configuración.';
-  if (estado === 403) return 'La API key no tiene permiso para usar este servicio.';
-  if (estado === 413) return 'La foto es demasiado pesada. Probá de nuevo.';
-  if (estado === 429) return 'Hay demasiadas consultas. Esperá un momento y probá de nuevo.';
-  if (estado >= 500) return 'El servicio de IA no está disponible ahora. Probá de nuevo en un rato.';
-  return `El servicio de IA rechazó la consulta (error ${estado}).`;
-}
+// Dos intentos con el mismo modelo ante una sobrecarga o un límite por minuto.
+const INTENTOS = [MODELO_ANTHROPIC, MODELO_ANTHROPIC];
 
 interface RespuestaAnthropic {
   content?: { type: string; input?: FacturaExtraidaDto }[];
+  stop_reason?: string;
+  error?: { message?: string };
 }
 
 /**
@@ -29,28 +26,21 @@ interface RespuestaAnthropic {
  * La clave viaja en el celular: sirve para probar, no para producción (ver docs/ARQUITECTURA.md).
  */
 export class ExtractorAnthropicDataSource implements ExtractorFacturaDataSource {
-  async extraer(imagenes: ImagenFactura[], apiKey: string): Promise<FacturaExtraidaDto> {
+  async extraer(imagenes: ImagenFactura[], apiKey: string, correcciones: string[] = []): Promise<FacturaExtraidaDto> {
     if (imagenes.length === 0) throw new ErrorExtraccion('No hay fotos para analizar.');
     if (apiKey.trim() === '') {
       throw new ErrorExtraccion('Falta la API key de IA. Cargala en Configuración.');
     }
 
-    const control = new AbortController();
-    const temporizador = setTimeout(() => control.abort(), TIEMPO_MAXIMO_MS);
+    const texto = `${instruccionesPara(imagenes.length, correcciones)}\nRegistrá los datos con la herramienta ${NOMBRE_HERRAMIENTA}.`;
 
-    let respuesta: Response;
-    try {
-      respuesta = await fetch(URL_API, {
-        method: 'POST',
-        signal: control.signal,
-        headers: {
-          'content-type': 'application/json',
-          'x-api-key': apiKey.trim(),
-          'anthropic-version': VERSION_API,
-        },
-        body: JSON.stringify({
-          model: MODELO_ANTHROPIC,
-          max_tokens: 4096,
+    const resultado = await reintentar<RespuestaAnthropic>(INTENTOS, (modelo) =>
+      pedirJson<RespuestaAnthropic>(
+        URL_API,
+        { 'x-api-key': apiKey.trim(), 'anthropic-version': VERSION_API },
+        {
+          model: modelo,
+          max_tokens: MAXIMO_TOKENS,
           tools: [
             {
               name: NOMBRE_HERRAMIENTA,
@@ -67,23 +57,23 @@ export class ExtractorAnthropicDataSource implements ExtractorFacturaDataSource 
                   type: 'image',
                   source: { type: 'base64', media_type: imagen.tipoMime, data: imagen.base64 },
                 })),
-                { type: 'text', text: `${instruccionesPara(imagenes.length)}\nRegistrá los datos con la herramienta ${NOMBRE_HERRAMIENTA}.` },
+                { type: 'text', text: texto },
               ],
             },
           ],
-        }),
-      });
-    } catch {
-      throw new ErrorExtraccion('No se pudo conectar con el servicio de IA. Revisá tu conexión.');
-    } finally {
-      clearTimeout(temporizador);
+        },
+      ),
+    );
+
+    if (!huboExito(resultado)) {
+      throw new ErrorExtraccion(mensajeDeEstadoIa(resultado.estado, resultado.cuerpo.error?.message ?? ''));
     }
 
-    if (!respuesta.ok) throw new ErrorExtraccion(mensajeDeEstado(respuesta.status));
+    const cuerpo = resultado.cuerpo;
+    if (cuerpo.stop_reason === 'max_tokens') throw new ErrorExtraccion(MENSAJE_RESPUESTA_CORTADA);
 
-    const cuerpo = (await respuesta.json()) as RespuestaAnthropic;
-    const resultado = cuerpo.content?.find((bloque) => bloque.type === 'tool_use')?.input;
-    if (!resultado) throw new ErrorExtraccion('La IA no devolvió datos. Probá de nuevo.');
-    return resultado;
+    const datos = cuerpo.content?.find((bloque) => bloque.type === 'tool_use')?.input;
+    if (!datos) throw new ErrorExtraccion('La IA no devolvió datos. Probá de nuevo.');
+    return datos;
   }
 }

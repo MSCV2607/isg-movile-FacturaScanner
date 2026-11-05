@@ -15,6 +15,12 @@ export const USAR_EXTRACTOR_SIMULADO = false;
 /** Servicio de IA con visión que lee la factura. */
 export const PROVEEDOR_IA: 'gemini' | 'anthropic' = 'gemini';
 
+/**
+ * `true`: si la lectura tiene datos que no cierran (totales, CUIT, fecha...), se hace una segunda
+ * consulta a la IA mostrándole los problemas. Cuesta una llamada más, solo cuando hace falta.
+ */
+export const CORREGIR_LECTURA_CON_IA = true;
+
 /** Modelos de cada servicio (se cambian acá si cambian los nombres). */
 export const MODELO_GEMINI = 'gemini-3.8-flash';
 /** Se usa si el modelo principal sigue fallando por sobrecarga. */
@@ -37,3 +43,15 @@ export const CALIDAD_PAGINA = 0.7;
  */
 export const URL_DATOS_APK: string =
   'https://gist.githubusercontent.com/MSCV2607/03a534b0bce19f58412cdc64764ebc77/raw/apk.json';
+
+/**
+ * URLs de las APIs del backend, sin barra final (ej.: 'https://algo.trycloudflare.com').
+ *
+ * - URL_API_EMPRESA: api centralizada de empresas. De ahí sale la lista del desplegable del login
+ *   (GET /api/Empresas) y la dirección del auth de cada empresa.
+ *   Vacía = se usa la lista provisoria (core/config/empresasProvisorias.ts).
+ *
+ * El login y el registro van siempre a la URL de auth que tiene guardada la empresa elegida (tabla Empresas, columna UrlAuth).
+ * Sin ninguna dirección de auth no se puede ingresar (el login nunca se simula).
+ */
+export const URL_API_EMPRESA: string = 'https://coated-gulf-opens-amendment.trycloudflare.com';

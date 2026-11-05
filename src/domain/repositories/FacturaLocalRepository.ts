@@ -3,6 +3,7 @@ import { Factura } from '../entities/Factura';
 import { FacturaGuardada } from '../entities/FacturaGuardada';
 import { ImagenFactura } from '../entities/ImagenFactura';
 import { RangoFechas } from '../entities/RangoFechas';
+import { CorreccionCampo, LecturaIaGuardada, RegistroLectura } from '../entities/RegistroLectura';
 import { ResumenFactura } from '../entities/ResumenFactura';
 
 /** Facturas guardadas en el celular (datos y fotos originales). */
@@ -25,4 +26,8 @@ export interface FacturaLocalRepository {
   renombrarCategoria(anterior: string, nueva: string): Promise<number>;
   /** null si no existe (por ejemplo, si se borró). */
   obtener(id: number): Promise<FacturaGuardada | null>;
+  /** Anota cómo se leyó con IA una factura ya guardada y qué datos corrigió el usuario. Se borra junto con la factura. */
+  registrarLecturaIa(facturaId: number, lectura: RegistroLectura, correcciones: CorreccionCampo[]): Promise<void>;
+  /** Cómo se leyó con IA cada factura guardada y qué se corrigió; sirve para medir la precisión. */
+  obtenerLecturasIa(): Promise<LecturaIaGuardada[]>;
 }

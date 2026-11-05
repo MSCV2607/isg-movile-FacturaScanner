@@ -7,6 +7,7 @@ import { styles } from './PasswordField.styles';
 
 type PasswordFieldProps = Omit<TextInputProps, 'style' | 'secureTextEntry'> & {
   label: string;
+  errorMessage?: string;
 };
 
 export function PasswordField({ label, ...inputProps }: PasswordFieldProps) {

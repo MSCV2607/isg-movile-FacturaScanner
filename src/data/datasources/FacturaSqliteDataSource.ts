@@ -1,6 +1,7 @@
-import { openDatabaseAsync, SQLiteDatabase } from 'expo-sqlite';
+import type { SQLiteDatabase } from 'expo-sqlite';
 
 import { FacturaFilaDto, FotoFilaDto, ItemFilaDto, NuevaFacturaDto } from '../dtos/FacturaGuardadaDto';
+import { LecturaIaFilaDto, NuevaLecturaIaDto } from '../dtos/LecturaIaDto';
 import { FacturaCompletaDto, FacturasLocalesDataSource } from './FacturasLocalesDataSource';
 
 const NOMBRE_BASE = 'facturas.db';
@@ -55,6 +56,22 @@ const MIGRACIONES: string[] = [
   ALTER TABLE facturas ADD COLUMN medio_pago TEXT NOT NULL DEFAULT '';
   ALTER TABLE facturas ADD COLUMN notas TEXT NOT NULL DEFAULT '';
   `,
+  // Versión 4: cómo se leyó cada factura con IA y qué datos corrigió el usuario (para medir la precisión de la lectura).
+  `
+  CREATE TABLE lecturas_ia (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    factura_id INTEGER NOT NULL REFERENCES facturas(id) ON DELETE CASCADE,
+    creada_en TEXT NOT NULL,
+    proveedor TEXT NOT NULL,
+    con_qr INTEGER NOT NULL DEFAULT 0,
+    segunda_pasada INTEGER NOT NULL DEFAULT 0,
+    campos_dudosos TEXT NOT NULL DEFAULT '',
+    campos_discrepancia TEXT NOT NULL DEFAULT '',
+    campos_corregidos TEXT NOT NULL DEFAULT '',
+    correcciones TEXT NOT NULL DEFAULT '[]'
+  );
+  CREATE INDEX idx_lecturas_ia_factura ON lecturas_ia(factura_id);
+  `,
 ];
 
 async function migrar(base: SQLiteDatabase): Promise<void> {
@@ -85,6 +102,8 @@ export class FacturaSqliteDataSource implements FacturasLocalesDataSource {
   }
 
   private async inicializar(): Promise<SQLiteDatabase> {
+    // Se carga recién al usarla: así la app arranca aunque el módulo nativo no esté (por ejemplo en Expo Go).
+    const { openDatabaseAsync } = await import('expo-sqlite');
     const base = await openDatabaseAsync(NOMBRE_BASE);
     await base.execAsync('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;');
     await migrar(base);
@@ -151,6 +170,34 @@ export class FacturaSqliteDataSource implements FacturasLocalesDataSource {
   async eliminar(facturaId: number): Promise<void> {
     const base = await this.abrir();
     await base.runAsync('DELETE FROM facturas WHERE id = ?', [facturaId]);
+  }
+
+  async insertarLecturaIa(facturaId: number, lectura: NuevaLecturaIaDto): Promise<void> {
+    const base = await this.abrir();
+    await base.runAsync(
+      `INSERT INTO lecturas_ia (
+        factura_id, creada_en, proveedor, con_qr, segunda_pasada, campos_dudosos, campos_discrepancia,
+        campos_corregidos, correcciones
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        facturaId,
+        lectura.creada_en,
+        lectura.proveedor,
+        lectura.con_qr,
+        lectura.segunda_pasada,
+        lectura.campos_dudosos,
+        lectura.campos_discrepancia,
+        lectura.campos_corregidos,
+        lectura.correcciones,
+      ],
+    );
+  }
+
+  async obtenerLecturasIa(): Promise<LecturaIaFilaDto[]> {
+    const base = await this.abrir();
+    return base.getAllAsync<LecturaIaFilaDto>(
+      'SELECT proveedor, con_qr, segunda_pasada, campos_dudosos, campos_corregidos FROM lecturas_ia ORDER BY id',
+    );
   }
 
   async obtenerUltimas(cantidad: number): Promise<FacturaFilaDto[]> {

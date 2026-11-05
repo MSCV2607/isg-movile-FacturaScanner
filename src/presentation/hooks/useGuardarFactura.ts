@@ -18,7 +18,7 @@ export interface AvisoDuplicado {
  */
 export function useGuardarFactura() {
   const router = useRouter();
-  const { fotos, actualizarFactura, registrarGuardada, registrarError } = useFacturaEnCurso();
+  const { fotos, registroLectura, actualizarFactura, registrarGuardada, registrarError } = useFacturaEnCurso();
   const [guardando, setGuardando] = useState(false);
   const [duplicado, setDuplicado] = useState<AvisoDuplicado | null>(null);
   const enCursoRef = useRef(false);
@@ -39,7 +39,7 @@ export function useGuardarFactura() {
   async function persistir(factura: Factura) {
     actualizarFactura(factura);
     try {
-      const guardada = await container.guardarFactura.ejecutar(factura, fotos);
+      const guardada = await container.guardarFactura.ejecutar(factura, fotos, registroLectura);
       registrarGuardada(guardada);
       router.replace('/envio-exitoso');
     } catch (error) {

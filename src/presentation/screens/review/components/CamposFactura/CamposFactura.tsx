@@ -22,6 +22,8 @@ type CamposFacturaProps = {
   /** Avisos de la lectura automática; en edición no hay. */
   discrepancias?: Discrepancia[];
   avisoLectura?: string | null;
+  /** Datos que la IA marcó como dudosos; se avisa debajo de cada campo. */
+  camposDudosos?: CampoFactura[];
 };
 
 /** Todos los campos editables de una factura. Los comparten la revisión (factura nueva) y la edición (ya guardada). */
@@ -31,6 +33,7 @@ export function CamposFactura({
   categoriasDisponibles,
   discrepancias = [],
   avisoLectura = null,
+  camposDudosos = [],
 }: CamposFacturaProps) {
   const { valores, errores, items, categoria, medioPago, notas, cuitValido, delHistorial, diferenciaDeTotal, cambiar } =
     formulario;
@@ -42,6 +45,10 @@ export function CamposFactura({
     const discrepancia = discrepancias.find((item) => item.campo === campo);
     return discrepancia ? `La IA había leído "${discrepancia.valorIa}". Se usó el dato del QR de ARCA.` : undefined;
   };
+
+  /** Discrepancia con el QR o, si no hay, aviso de que la IA dudó de ese dato. */
+  const notaLectura = (campo: CampoFactura): string | undefined =>
+    notaDe(campo) ?? (camposDudosos.includes(campo) ? TEXTOS_REVISION.lecturaDudosa : undefined);
 
   const notaHistorial = (campo: 'razonSocial' | 'condicionFiscal' | 'categoria'): string | undefined =>
     delHistorial.includes(campo) ? TEXTOS_REVISION.deTuHistorial : undefined;
@@ -78,7 +85,7 @@ export function CamposFactura({
             value={valores.razonSocial}
             onChangeText={(texto) => cambiar('razonSocial', texto)}
             errorMessage={errores.razonSocial}
-            noteMessage={notaHistorial('razonSocial')}
+            noteMessage={notaHistorial('razonSocial') ?? notaLectura('razonSocial')}
             autoCapitalize="words"
           />
           <TextField
@@ -86,7 +93,7 @@ export function CamposFactura({
             value={valores.cuitEmisor}
             onChangeText={(texto) => cambiar('cuitEmisor', texto)}
             errorMessage={errores.cuitEmisor}
-            noteMessage={notaDe('cuitEmisor')}
+            noteMessage={notaLectura('cuitEmisor')}
             okMessage={cuitValido ? TEXTOS_REVISION.cuitValido : undefined}
             keyboardType="number-pad"
           />
@@ -95,7 +102,7 @@ export function CamposFactura({
             value={valores.condicionFiscal}
             onChangeText={(texto) => cambiar('condicionFiscal', texto)}
             errorMessage={errores.condicionFiscal}
-            noteMessage={notaHistorial('condicionFiscal')}
+            noteMessage={notaHistorial('condicionFiscal') ?? notaLectura('condicionFiscal')}
           />
           <CategoriaSelector
             categoria={categoria}
@@ -122,7 +129,7 @@ export function CamposFactura({
                 value={valores.puntoVenta}
                 onChangeText={(texto) => cambiar('puntoVenta', texto)}
                 errorMessage={errores.puntoVenta}
-                noteMessage={notaDe('puntoVenta')}
+                noteMessage={notaLectura('puntoVenta')}
                 keyboardType="number-pad"
               />
             </View>
@@ -132,7 +139,7 @@ export function CamposFactura({
                 value={valores.numero}
                 onChangeText={(texto) => cambiar('numero', texto)}
                 errorMessage={errores.numero}
-                noteMessage={notaDe('numero')}
+                noteMessage={notaLectura('numero')}
                 keyboardType="number-pad"
               />
             </View>
@@ -143,7 +150,7 @@ export function CamposFactura({
             value={valores.fecha}
             onChangeText={(texto) => cambiar('fecha', texto)}
             errorMessage={errores.fecha}
-            noteMessage={notaDe('fecha')}
+            noteMessage={notaLectura('fecha')}
             placeholder="DD/MM/AAAA"
             keyboardType="numbers-and-punctuation"
           />
@@ -161,6 +168,7 @@ export function CamposFactura({
                 value={valores.importeNeto}
                 onChangeText={(texto) => cambiar('importeNeto', texto)}
                 errorMessage={errores.importeNeto}
+                noteMessage={notaLectura('importeNeto')}
                 keyboardType="decimal-pad"
               />
             </View>
@@ -170,6 +178,7 @@ export function CamposFactura({
                 value={valores.importeIva}
                 onChangeText={(texto) => cambiar('importeIva', texto)}
                 errorMessage={errores.importeIva}
+                noteMessage={notaLectura('importeIva')}
                 keyboardType="decimal-pad"
               />
             </View>
@@ -179,7 +188,7 @@ export function CamposFactura({
             value={valores.importeTotal}
             onChangeText={(texto) => cambiar('importeTotal', texto)}
             errorMessage={errores.importeTotal}
-            noteMessage={avisoTotal ?? notaDe('importeTotal')}
+            noteMessage={avisoTotal ?? notaLectura('importeTotal')}
             keyboardType="decimal-pad"
           />
         </View>

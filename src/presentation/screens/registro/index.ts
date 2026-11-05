@@ -1,0 +1,1 @@
+export { RegistroScreen } from './RegistroScreen';
