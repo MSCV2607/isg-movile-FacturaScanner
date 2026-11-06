@@ -54,4 +54,4 @@ export const URL_DATOS_APK: string =
  * El login y el registro van siempre a la URL de auth que tiene guardada la empresa elegida (tabla Empresas, columna UrlAuth).
  * Sin ninguna dirección de auth no se puede ingresar (el login nunca se simula).
  */
-export const URL_API_EMPRESA: string = 'https://coated-gulf-opens-amendment.trycloudflare.com';
+export const URL_API_EMPRESA: string = 'https://gender-identifying-isaac-watts.trycloudflare.com';
